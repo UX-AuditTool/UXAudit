@@ -19,13 +19,60 @@ export interface Flow {
   updatedAt: Date;
 }
 
-export interface Step {
+export type Severity = 'Critical' | 'High' | 'Medium' | 'Low' | 'None';
+
+export type Heuristic =
+  | 'Visibility of System Status'
+  | 'Match Between System and Real World'
+  | 'User Control and Freedom'
+  | 'Consistency and Standards'
+  | 'Error Prevention'
+  | 'Recognition Rather than Recall'
+  | 'Flexibility and Efficiency of Use'
+  | 'Aesthetic and Minimalist Design'
+  | 'Help Users Recognize, Diagnose, and Recover from Errors'
+  | 'Help and Documentation';
+
+export interface HeuristicViolation {
+  heuristic: Heuristic;
+  severity: Severity;
+  notes: string;
+  screenshotIds?: string[];
+}
+
+export interface FlowAudit {
   id: string;
   flowId: string;
-  title: string;
-  url?: string;
-  notes?: string;
-  order: number;
+
+  // Heuristic Violations
+  heuristicViolations: HeuristicViolation[];
+
+  // Platform & Technical
+  platformNotes?: string;
+
+  // Accessibility & Compliance
+  wcagCompliant?: boolean;
+  wcagNotes?: string;
+  hipaaCompliant?: boolean;
+  hipaaRequired?: boolean;
+
+  // Design System Assessment
+  brandGuidelinesCompliant?: boolean;
+  typographyNotes?: string;
+  colorPaletteNotes?: string;
+  iconographyNotes?: string;
+  componentUsageNotes?: string;
+  feedbackAffordancesNotes?: string;
+  responsivenessNotes?: string;
+
+  // Usability Risks & Opportunities
+  efficiencyBlockers?: string;
+  errorHandlingNotes?: string;
+  recoveryPathsNotes?: string;
+
+  // Auto-calculated score
+  overallScore?: number;
+
   createdAt: Date;
   updatedAt: Date;
 }

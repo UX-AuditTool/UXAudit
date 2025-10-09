@@ -1,11 +1,11 @@
 import { create } from 'zustand';
-import { Project, Flow, Step } from '../types';
+import { Project, Flow, FlowAudit, HeuristicViolation } from '../types';
 
 interface AppState {
   // Data
   projects: Project[];
   flows: Flow[];
-  steps: Step[];
+  flowAudits: FlowAudit[];
   currentProjectId: string | null;
 
   // Actions - Projects
@@ -16,18 +16,17 @@ interface AppState {
   addFlow: (flow: Omit<Flow, 'id' | 'createdAt' | 'updatedAt' | 'order'>) => Flow;
   getFlowsByProject: (projectId: string) => Flow[];
 
-  // Actions - Steps
-  addStep: (step: Omit<Step, 'id' | 'createdAt' | 'updatedAt' | 'order'>) => Step;
-  getStepsByFlow: (flowId: string) => Step[];
-  updateStep: (stepId: string, updates: Partial<Step>) => void;
-  deleteStep: (stepId: string) => void;
+  // Actions - Flow Audits
+  getOrCreateFlowAudit: (flowId: string) => FlowAudit;
+  updateFlowAudit: (flowId: string, updates: Partial<Omit<FlowAudit, 'id' | 'flowId' | 'createdAt' | 'updatedAt'>>) => void;
+  updateHeuristicViolation: (flowId: string, violation: HeuristicViolation) => void;
 }
 
 const useStore = create<AppState>((set, get) => ({
   // Initial state
   projects: [],
   flows: [],
-  steps: [],
+  flowAudits: [],
   currentProjectId: null,
 
   // Project actions
@@ -77,44 +76,52 @@ const useStore = create<AppState>((set, get) => ({
       .sort((a, b) => a.order - b.order);
   },
 
-  // Step actions
-  addStep: (stepData) => {
-    const steps = get().steps.filter((s) => s.flowId === stepData.flowId);
-    const maxOrder = steps.length > 0 ? Math.max(...steps.map((s) => s.order)) : -1;
+  // Flow Audit actions
+  getOrCreateFlowAudit: (flowId) => {
+    const existing = get().flowAudits.find((a) => a.flowId === flowId);
+    if (existing) return existing;
 
-    const newStep: Step = {
-      ...stepData,
-      id: `step-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      order: maxOrder + 1,
+    const newAudit: FlowAudit = {
+      id: `audit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      flowId,
+      heuristicViolations: [],
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
     set((state) => ({
-      steps: [...state.steps, newStep],
+      flowAudits: [...state.flowAudits, newAudit],
     }));
 
-    return newStep;
+    return newAudit;
   },
 
-  getStepsByFlow: (flowId) => {
-    return get()
-      .steps.filter((s) => s.flowId === flowId)
-      .sort((a, b) => a.order - b.order);
-  },
-
-  updateStep: (stepId, updates) => {
+  updateFlowAudit: (flowId, updates) => {
     set((state) => ({
-      steps: state.steps.map((step) =>
-        step.id === stepId ? { ...step, ...updates, updatedAt: new Date() } : step
+      flowAudits: state.flowAudits.map((audit) =>
+        audit.flowId === flowId
+          ? { ...audit, ...updates, updatedAt: new Date() }
+          : audit
       ),
     }));
   },
 
-  deleteStep: (stepId) => {
-    set((state) => ({
-      steps: state.steps.filter((step) => step.id !== stepId),
-    }));
+  updateHeuristicViolation: (flowId, violation) => {
+    const audit = get().getOrCreateFlowAudit(flowId);
+    const existingIndex = audit.heuristicViolations.findIndex(
+      (v) => v.heuristic === violation.heuristic
+    );
+
+    const updatedViolations = [...audit.heuristicViolations];
+    if (existingIndex >= 0) {
+      updatedViolations[existingIndex] = violation;
+    } else {
+      updatedViolations.push(violation);
+    }
+
+    get().updateFlowAudit(flowId, {
+      heuristicViolations: updatedViolations,
+    });
   },
 }));
 

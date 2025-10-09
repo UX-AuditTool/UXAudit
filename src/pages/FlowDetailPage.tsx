@@ -1,22 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Plus, ListOrdered, Trash2, GripVertical } from 'lucide-react';
 import useStore from '../store/useStore';
-import Button from '../components/ui/Button';
-import Card, { CardContent } from '../components/ui/Card';
-import EmptyState from '../components/ui/EmptyState';
-import AddStepForm from '../components/step/AddStepForm';
+import Textarea from '../components/ui/Textarea';
+import SeveritySelector from '../components/audit/SeveritySelector';
+import { HEURISTICS } from '../lib/constants/heuristics';
+import { Heuristic, Severity } from '../types';
+import { calculateFlowScore, getScoreLabel, getScoreColor } from '../lib/utils/scoreCalculation';
+import { Info } from 'lucide-react';
 
 const FlowDetailPage = () => {
   const { projectId, flowId } = useParams<{ projectId: string; flowId: string }>();
   const project = useStore((state) => state.projects.find((p) => p.id === projectId));
   const flow = useStore((state) => state.flows.find((f) => f.id === flowId));
-  const steps = useStore((state) => state.getStepsByFlow(flowId!));
-  const deleteStep = useStore((state) => state.deleteStep);
+  const getOrCreateFlowAudit = useStore((state) => state.getOrCreateFlowAudit);
+  const updateHeuristicViolation = useStore((state) => state.updateHeuristicViolation);
+  const updateFlowAudit = useStore((state) => state.updateFlowAudit);
 
-  const [showAddStepForm, setShowAddStepForm] = useState(false);
+  const [audit, setAudit] = useState(() => flowId ? getOrCreateFlowAudit(flowId) : null);
 
-  if (!project || !flow) {
+  // Auto-save on changes
+  useEffect(() => {
+    if (flowId) {
+      const currentAudit = getOrCreateFlowAudit(flowId);
+      setAudit(currentAudit);
+    }
+  }, [flowId, getOrCreateFlowAudit]);
+
+  if (!project || !flow || !audit) {
     return (
       <div className="min-h-screen bg-page-bg flex items-center justify-center">
         <p className="text-body-base text-neutral-600">Flow not found</p>
@@ -24,25 +34,62 @@ const FlowDetailPage = () => {
     );
   }
 
-  const handleDeleteStep = (stepId: string) => {
-    if (confirm('Are you sure you want to delete this step?')) {
-      deleteStep(stepId);
-    }
+  const handleHeuristicChange = (heuristic: Heuristic, severity: Severity) => {
+    if (!flowId) return;
+
+    const violation = audit.heuristicViolations.find((v) => v.heuristic === heuristic) || {
+      heuristic,
+      severity: 'None' as Severity,
+      notes: '',
+    };
+
+    updateHeuristicViolation(flowId, {
+      ...violation,
+      severity,
+    });
+
+    // Refresh audit
+    setAudit(getOrCreateFlowAudit(flowId));
   };
+
+  const handleHeuristicNotesChange = (heuristic: Heuristic, notes: string) => {
+    if (!flowId) return;
+
+    const violation = audit.heuristicViolations.find((v) => v.heuristic === heuristic) || {
+      heuristic,
+      severity: 'None' as Severity,
+      notes: '',
+    };
+
+    updateHeuristicViolation(flowId, {
+      ...violation,
+      notes,
+    });
+
+    setAudit(getOrCreateFlowAudit(flowId));
+  };
+
+  const handleFieldChange = (field: string, value: string | boolean) => {
+    if (!flowId) return;
+    updateFlowAudit(flowId, { [field]: value });
+    setAudit(getOrCreateFlowAudit(flowId));
+  };
+
+  // Calculate score
+  const { score, reasoning } = calculateFlowScore(audit);
+  const scoreColors = getScoreColor(score);
+  const scoreLabel = getScoreLabel(score);
 
   return (
     <div className="min-h-screen bg-page-bg">
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-8 py-12">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-body-sm text-neutral-600 mb-6">
+        <nav className="flex items-center gap-2 text-body-sm text-neutral-600 mb-8">
           <a href="/" className="hover:text-teal-500 transition-colors">
             Home
           </a>
           <span>/</span>
-          <a
-            href={`/projects/${projectId}`}
-            className="hover:text-teal-500 transition-colors"
-          >
+          <a href={`/projects/${projectId}`} className="hover:text-teal-500 transition-colors">
             {project.name}
           </a>
           <span>/</span>
@@ -50,20 +97,20 @@ const FlowDetailPage = () => {
         </nav>
 
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-start gap-4 mb-3">
-            <div className="text-4xl">
+        <div className="mb-16">
+          <div className="flex items-start gap-6 mb-4">
+            <div className="text-5xl">
               {flow.platform === 'Web' ? '🌐' : flow.platform === 'iOS' ? '📱' : '🤖'}
             </div>
             <div className="flex-1">
-              <h1 className="font-heading text-4xl text-espresso-600 mb-2">
+              <h1 className="font-heading text-4xl text-espresso-600 mb-3">
                 {flow.name}
               </h1>
-              <p className="text-body-base text-neutral-600">
+              <p className="text-body-lg text-neutral-600">
                 {flow.platform} · {flow.device}
               </p>
               {flow.urls.length > 0 && (
-                <div className="mt-2 space-y-1">
+                <div className="mt-4 space-y-2">
                   {flow.urls.map((url, index) => (
                     <a
                       key={index}
@@ -79,106 +126,324 @@ const FlowDetailPage = () => {
               )}
             </div>
           </div>
-        </div>
 
-        {/* Steps Section */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-heading text-2xl text-espresso-600">Steps</h2>
-            {steps.length > 0 && !showAddStepForm && (
-              <Button
-                onClick={() => setShowAddStepForm(true)}
-                leftIcon={<Plus className="h-5 w-5" />}
-                size="sm"
-              >
-                Add Step
-              </Button>
-            )}
-          </div>
-
-          {steps.length === 0 && !showAddStepForm ? (
-            <Card>
-              <EmptyState
-                icon={<ListOrdered className="h-16 w-16" />}
-                title="No steps yet"
-                description="Add steps to structure this flow. Each step represents a screen or action in the user journey."
-                action={
-                  <Button
-                    onClick={() => setShowAddStepForm(true)}
-                    leftIcon={<Plus className="h-5 w-5" />}
-                  >
-                    Add First Step
-                  </Button>
-                }
-              />
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {/* Step List */}
-              {steps.map((step, index) => (
-                <Card key={step.id} hover={false}>
-                  <CardContent className="flex items-start gap-4">
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <GripVertical className="h-5 w-5 text-neutral-400 cursor-grab" />
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-sage-100 text-sage-700 font-heading font-semibold">
-                        {index + 1}
-                      </div>
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-heading text-lg text-espresso-600 mb-1">
-                        {step.title}
-                      </h3>
-                      {step.url && (
-                        <a
-                          href={step.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-body-sm text-teal-500 hover:underline break-all"
-                        >
-                          {step.url}
-                        </a>
-                      )}
-                      {step.notes && (
-                        <p className="text-body-sm text-neutral-600 mt-2">
-                          {step.notes}
-                        </p>
-                      )}
-                    </div>
-
-                    <button
-                      onClick={() => handleDeleteStep(step.id)}
-                      className="flex-shrink-0 p-2 text-neutral-500 hover:text-error hover:bg-error/10 rounded-base transition-colors"
-                      aria-label="Delete step"
+          {/* Overall Score */}
+          {score > 0 && (
+            <div className="mt-8 p-6 bg-white rounded-lg border-2 border-neutral-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-label-base text-neutral-600 mb-2">Overall Flow Score</p>
+                  <div className="flex items-baseline gap-3">
+                    <span className="font-heading text-4xl text-espresso-600">
+                      {score.toFixed(1)}
+                    </span>
+                    <span
+                      className={`inline-flex items-center px-4 py-1.5 rounded-full text-label-base font-medium ${scoreColors.bg} ${scoreColors.text}`}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </CardContent>
-                </Card>
-              ))}
-
-              {/* Add Step Form */}
-              {showAddStepForm && flowId && (
-                <AddStepForm
-                  flowId={flowId}
-                  onSuccess={() => setShowAddStepForm(false)}
-                  onCancel={() => setShowAddStepForm(false)}
-                />
-              )}
-
-              {/* Add Another Button */}
-              {!showAddStepForm && steps.length > 0 && (
-                <Button
-                  variant="ghost"
-                  onClick={() => setShowAddStepForm(true)}
-                  leftIcon={<Plus className="h-4 w-4" />}
-                  className="w-full"
-                >
-                  Add Another Step
-                </Button>
-              )}
+                      {scoreLabel}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <p className="text-body-sm text-neutral-600 mt-4">{reasoning}</p>
             </div>
           )}
+        </div>
+
+        {/* Section 1: Heuristic Violations */}
+        <section className="mb-20">
+          <div className="mb-8">
+            <h2 className="font-heading text-3xl text-espresso-600 mb-3">
+              Heuristic Violations
+            </h2>
+            <p className="text-body-base text-neutral-600">
+              Evaluate this flow against Nielsen's 10 usability heuristics. Rate the severity of
+              violations found for each principle.
+            </p>
+          </div>
+
+          <div className="space-y-10">
+            {HEURISTICS.map((heuristicDef, index) => {
+              const violation = audit.heuristicViolations.find(
+                (v) => v.heuristic === heuristicDef.name
+              );
+              const severity = violation?.severity || 'None';
+              const notes = violation?.notes || '';
+
+              return (
+                <div
+                  key={heuristicDef.name}
+                  className="p-8 bg-white rounded-lg border border-neutral-200"
+                >
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-sage-100 text-sage-700 font-heading font-semibold flex-shrink-0">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-heading text-xl text-espresso-600 mb-2">
+                        {heuristicDef.name}
+                      </h3>
+                      <p className="text-body-sm text-neutral-600 mb-4">
+                        {heuristicDef.description}
+                      </p>
+                      <div className="flex items-center gap-2 text-body-xs text-neutral-500">
+                        <Info className="h-4 w-4" />
+                        <span>Examples: {heuristicDef.examples.join(', ')}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <SeveritySelector
+                      value={severity}
+                      onChange={(newSeverity) =>
+                        handleHeuristicChange(heuristicDef.name, newSeverity)
+                      }
+                      label="Severity"
+                    />
+
+                    <Textarea
+                      label="Observations & Notes"
+                      placeholder="Describe the violation, context, and impact..."
+                      value={notes}
+                      onChange={(e) => handleHeuristicNotesChange(heuristicDef.name, e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Section 2: Platform & Technical */}
+        <section className="mb-20">
+          <div className="mb-8">
+            <h2 className="font-heading text-3xl text-espresso-600 mb-3">
+              Platform & Technical Considerations
+            </h2>
+            <p className="text-body-base text-neutral-600">
+              Document platform-specific observations, technical constraints, and framework
+              considerations.
+            </p>
+          </div>
+
+          <div className="p-8 bg-white rounded-lg border border-neutral-200">
+            <Textarea
+              label="Platform Notes"
+              placeholder="Technical observations, framework patterns, performance considerations..."
+              value={audit.platformNotes || ''}
+              onChange={(e) => handleFieldChange('platformNotes', e.target.value)}
+              rows={5}
+            />
+          </div>
+        </section>
+
+        {/* Section 3: Accessibility & Compliance */}
+        <section className="mb-20">
+          <div className="mb-8">
+            <h2 className="font-heading text-3xl text-espresso-600 mb-3">
+              Accessibility & Compliance
+            </h2>
+            <p className="text-body-base text-neutral-600">
+              WCAG 2.2 AA spot-check for sighted and colorblind users, plus HIPAA safeguards if
+              applicable.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            <div className="p-8 bg-white rounded-lg border border-neutral-200">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="font-heading text-lg text-espresso-600 mb-1">
+                    WCAG 2.2 AA Compliance
+                  </h3>
+                  <p className="text-body-sm text-neutral-600">
+                    Focus on visual and colorblind accessibility
+                  </p>
+                </div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <span className="text-label-base text-neutral-700">Compliant</span>
+                  <input
+                    type="checkbox"
+                    checked={audit.wcagCompliant || false}
+                    onChange={(e) => handleFieldChange('wcagCompliant', e.target.checked)}
+                    className="w-6 h-6 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
+                  />
+                </label>
+              </div>
+
+              <Textarea
+                label="WCAG Notes"
+                placeholder="Accessibility issues found, contrast ratios, keyboard navigation, screen reader compatibility..."
+                value={audit.wcagNotes || ''}
+                onChange={(e) => handleFieldChange('wcagNotes', e.target.value)}
+                rows={4}
+              />
+            </div>
+
+            <div className="p-8 bg-white rounded-lg border border-neutral-200">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="font-heading text-lg text-espresso-600 mb-1">
+                    HIPAA UX Safeguards
+                  </h3>
+                  <p className="text-body-sm text-neutral-600">
+                    If protected health information (PHI) is present
+                  </p>
+                </div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <span className="text-label-base text-neutral-700">PHI Present</span>
+                  <input
+                    type="checkbox"
+                    checked={audit.hipaaRequired || false}
+                    onChange={(e) => handleFieldChange('hipaaRequired', e.target.checked)}
+                    className="w-6 h-6 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
+                  />
+                </label>
+              </div>
+
+              {audit.hipaaRequired && (
+                <label className="flex items-center gap-3 cursor-pointer mb-4">
+                  <input
+                    type="checkbox"
+                    checked={audit.hipaaCompliant || false}
+                    onChange={(e) => handleFieldChange('hipaaCompliant', e.target.checked)}
+                    className="w-6 h-6 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
+                  />
+                  <span className="text-label-base text-neutral-700">HIPAA Compliant</span>
+                </label>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Section 4: Design System Assessment */}
+        <section className="mb-20">
+          <div className="mb-8">
+            <h2 className="font-heading text-3xl text-espresso-600 mb-3">
+              Visual & Interaction Design Assessment
+            </h2>
+            <p className="text-body-base text-neutral-600">
+              Evaluate compliance with design system patterns, brand guidelines, and interaction
+              quality.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            <div className="p-8 bg-white rounded-lg border border-neutral-200">
+              <label className="flex items-center gap-3 cursor-pointer mb-6">
+                <input
+                  type="checkbox"
+                  checked={audit.brandGuidelinesCompliant || false}
+                  onChange={(e) => handleFieldChange('brandGuidelinesCompliant', e.target.checked)}
+                  className="w-6 h-6 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
+                />
+                <span className="font-heading text-lg text-espresso-600">
+                  Brand Guidelines Compliant
+                </span>
+              </label>
+
+              <div className="space-y-6">
+                <Textarea
+                  label="Typography Consistency"
+                  placeholder="Font usage, hierarchy, readability..."
+                  value={audit.typographyNotes || ''}
+                  onChange={(e) => handleFieldChange('typographyNotes', e.target.value)}
+                  rows={3}
+                />
+
+                <Textarea
+                  label="Color Palette Usage"
+                  placeholder="Brand colors, contrast, accessibility..."
+                  value={audit.colorPaletteNotes || ''}
+                  onChange={(e) => handleFieldChange('colorPaletteNotes', e.target.value)}
+                  rows={3}
+                />
+
+                <Textarea
+                  label="Iconography Consistency"
+                  placeholder="Icon style, sizing, clarity..."
+                  value={audit.iconographyNotes || ''}
+                  onChange={(e) => handleFieldChange('iconographyNotes', e.target.value)}
+                  rows={3}
+                />
+
+                <Textarea
+                  label="Component Usage"
+                  placeholder="Design system adherence, custom components, inconsistencies..."
+                  value={audit.componentUsageNotes || ''}
+                  onChange={(e) => handleFieldChange('componentUsageNotes', e.target.value)}
+                  rows={3}
+                />
+
+                <Textarea
+                  label="Feedback & System Status"
+                  placeholder="Loading states, error prevention/recovery, user feedback mechanisms..."
+                  value={audit.feedbackAffordancesNotes || ''}
+                  onChange={(e) => handleFieldChange('feedbackAffordancesNotes', e.target.value)}
+                  rows={3}
+                />
+
+                <Textarea
+                  label="Responsiveness & Micro-interactions"
+                  placeholder="Breakpoint behavior, animation quality, touch interactions..."
+                  value={audit.responsivenessNotes || ''}
+                  onChange={(e) => handleFieldChange('responsivenessNotes', e.target.value)}
+                  rows={3}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 5: Usability Risks & Opportunities */}
+        <section className="mb-20">
+          <div className="mb-8">
+            <h2 className="font-heading text-3xl text-espresso-600 mb-3">
+              Usability Risks & Opportunities
+            </h2>
+            <p className="text-body-base text-neutral-600">
+              Identify efficiency blockers, error-handling patterns, and improvement opportunities.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            <div className="p-8 bg-white rounded-lg border border-neutral-200">
+              <Textarea
+                label="Efficiency Blockers"
+                placeholder="Redundant data entry, excessive clicks, unclear CTAs, unnecessary steps..."
+                value={audit.efficiencyBlockers || ''}
+                onChange={(e) => handleFieldChange('efficiencyBlockers', e.target.value)}
+                rows={4}
+              />
+            </div>
+
+            <div className="p-8 bg-white rounded-lg border border-neutral-200">
+              <Textarea
+                label="Error Handling Patterns"
+                placeholder="Validation messages, error prevention, inline feedback..."
+                value={audit.errorHandlingNotes || ''}
+                onChange={(e) => handleFieldChange('errorHandlingNotes', e.target.value)}
+                rows={4}
+              />
+            </div>
+
+            <div className="p-8 bg-white rounded-lg border border-neutral-200">
+              <Textarea
+                label="Recovery Paths"
+                placeholder="How users can recover from errors, undo functionality, escape routes..."
+                value={audit.recoveryPathsNotes || ''}
+                onChange={(e) => handleFieldChange('recoveryPathsNotes', e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* Auto-save indicator */}
+        <div className="text-center text-body-sm text-neutral-500 pb-12">
+          All changes are automatically saved
         </div>
       </div>
     </div>

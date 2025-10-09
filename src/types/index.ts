@@ -3,6 +3,8 @@ export interface Project {
   name: string;
   clientName: string;
   auditGoal?: string;
+  devices?: Device[];
+  hipaaRequired?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -11,8 +13,6 @@ export interface Flow {
   id: string;
   projectId: string;
   name: string;
-  platform: 'Web' | 'iOS' | 'Android';
-  device: 'Desktop' | 'Mobile' | 'Tablet';
   urls: string[];
   order: number;
   createdAt: Date;
@@ -58,6 +58,7 @@ export interface FlowAudit {
 
   // Design System Assessment
   brandGuidelinesCompliant?: boolean;
+  brandGuidelineNonComplianceAreas?: string;
   typographyNotes?: string;
   colorPaletteNotes?: string;
   iconographyNotes?: string;

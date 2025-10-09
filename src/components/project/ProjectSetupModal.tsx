@@ -4,7 +4,9 @@ import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 import Textarea from '../ui/Textarea';
 import Button from '../ui/Button';
+import MultiSelect from '../ui/MultiSelect';
 import useStore from '../../store/useStore';
+import { Device } from '../../types';
 
 interface ProjectSetupModalProps {
   open: boolean;
@@ -19,6 +21,8 @@ const ProjectSetupModal = ({ open, onOpenChange }: ProjectSetupModalProps) => {
     name: '',
     clientName: '',
     auditGoal: '',
+    devices: [] as Device[],
+    hipaaRequired: false,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -45,10 +49,18 @@ const ProjectSetupModal = ({ open, onOpenChange }: ProjectSetupModalProps) => {
       name: formData.name,
       clientName: formData.clientName,
       auditGoal: formData.auditGoal || undefined,
+      devices: formData.devices.length > 0 ? formData.devices : undefined,
+      hipaaRequired: formData.hipaaRequired,
     });
 
     // Reset form
-    setFormData({ name: '', clientName: '', auditGoal: '' });
+    setFormData({
+      name: '',
+      clientName: '',
+      auditGoal: '',
+      devices: [],
+      hipaaRequired: false,
+    });
     setErrors({});
 
     // Close modal and navigate to project
@@ -113,6 +125,37 @@ const ProjectSetupModal = ({ open, onOpenChange }: ProjectSetupModalProps) => {
           onChange={(e) => handleChange('auditGoal', e.target.value)}
           rows={3}
         />
+
+        <MultiSelect
+          label="Target Devices"
+          description="Select all devices that will be audited in this project"
+          options={[
+            { value: 'Desktop', label: 'Desktop' },
+            { value: 'Mobile', label: 'Mobile' },
+            { value: 'Tablet', label: 'Tablet' },
+          ]}
+          selected={formData.devices}
+          onChange={(devices) => setFormData((prev) => ({ ...prev, devices: devices as Device[] }))}
+        />
+
+        <div className="pt-2">
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={formData.hipaaRequired}
+              onChange={(e) => setFormData((prev) => ({ ...prev, hipaaRequired: e.target.checked }))}
+              className="mt-1 w-5 h-5 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2 transition-colors"
+            />
+            <div>
+              <span className="block text-label-base text-espresso-600 group-hover:text-espresso-700 transition-colors">
+                Protected Health Information (PHI) Present
+              </span>
+              <span className="block text-body-xs text-neutral-600 mt-1">
+                Check this if the project involves HIPAA-regulated health data
+              </span>
+            </div>
+          </label>
+        </div>
       </form>
     </Modal>
   );

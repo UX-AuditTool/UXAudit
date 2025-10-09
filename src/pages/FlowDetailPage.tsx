@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import useStore from '../store/useStore';
 import Textarea from '../components/ui/Textarea';
-import SeveritySelector from '../components/audit/SeveritySelector';
+import HeuristicCarousel from '../components/audit/HeuristicCarousel';
 import { HEURISTICS } from '../lib/constants/heuristics';
 import { Heuristic, Severity } from '../types';
 import { calculateFlowScore, getScoreLabel, getScoreColor } from '../lib/utils/scoreCalculation';
-import { Info } from 'lucide-react';
 
 const FlowDetailPage = () => {
   const { projectId, flowId } = useParams<{ projectId: string; flowId: string }>();
@@ -69,6 +68,23 @@ const FlowDetailPage = () => {
     setAudit(getOrCreateFlowAudit(flowId));
   };
 
+  const handleHeuristicScreenshotsChange = (heuristic: Heuristic, screenshotIds: string[]) => {
+    if (!flowId) return;
+
+    const violation = audit.heuristicViolations.find((v) => v.heuristic === heuristic) || {
+      heuristic,
+      severity: 'None' as Severity,
+      notes: '',
+    };
+
+    updateHeuristicViolation(flowId, {
+      ...violation,
+      screenshotIds,
+    });
+
+    setAudit(getOrCreateFlowAudit(flowId));
+  };
+
   const handleFieldChange = (field: string, value: string | boolean) => {
     if (!flowId) return;
     updateFlowAudit(flowId, { [field]: value });
@@ -99,16 +115,10 @@ const FlowDetailPage = () => {
         {/* Header */}
         <div className="mb-16">
           <div className="flex items-start gap-6 mb-4">
-            <div className="text-5xl">
-              {flow.platform === 'Web' ? '🌐' : flow.platform === 'iOS' ? '📱' : '🤖'}
-            </div>
             <div className="flex-1">
               <h1 className="font-heading text-4xl text-espresso-600 mb-3">
                 {flow.name}
               </h1>
-              <p className="text-body-lg text-neutral-600">
-                {flow.platform} · {flow.device}
-              </p>
               {flow.urls.length > 0 && (
                 <div className="mt-4 space-y-2">
                   {flow.urls.map((url, index) => (
@@ -162,58 +172,13 @@ const FlowDetailPage = () => {
             </p>
           </div>
 
-          <div className="space-y-10">
-            {HEURISTICS.map((heuristicDef, index) => {
-              const violation = audit.heuristicViolations.find(
-                (v) => v.heuristic === heuristicDef.name
-              );
-              const severity = violation?.severity || 'None';
-              const notes = violation?.notes || '';
-
-              return (
-                <div
-                  key={heuristicDef.name}
-                  className="p-8 bg-white rounded-lg border border-neutral-200"
-                >
-                  <div className="flex items-start gap-4 mb-6">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-sage-100 text-sage-700 font-heading font-semibold flex-shrink-0">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-heading text-xl text-espresso-600 mb-2">
-                        {heuristicDef.name}
-                      </h3>
-                      <p className="text-body-sm text-neutral-600 mb-4">
-                        {heuristicDef.description}
-                      </p>
-                      <div className="flex items-center gap-2 text-body-xs text-neutral-500">
-                        <Info className="h-4 w-4" />
-                        <span>Examples: {heuristicDef.examples.join(', ')}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    <SeveritySelector
-                      value={severity}
-                      onChange={(newSeverity) =>
-                        handleHeuristicChange(heuristicDef.name, newSeverity)
-                      }
-                      label="Severity"
-                    />
-
-                    <Textarea
-                      label="Observations & Notes"
-                      placeholder="Describe the violation, context, and impact..."
-                      value={notes}
-                      onChange={(e) => handleHeuristicNotesChange(heuristicDef.name, e.target.value)}
-                      rows={3}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <HeuristicCarousel
+            heuristics={HEURISTICS}
+            violations={audit.heuristicViolations}
+            onHeuristicChange={handleHeuristicChange}
+            onNotesChange={handleHeuristicNotesChange}
+            onScreenshotsChange={handleHeuristicScreenshotsChange}
+          />
         </section>
 
         {/* Section 2: Platform & Technical */}
@@ -282,39 +247,29 @@ const FlowDetailPage = () => {
               />
             </div>
 
-            <div className="p-8 bg-white rounded-lg border border-neutral-200">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="font-heading text-lg text-espresso-600 mb-1">
-                    HIPAA UX Safeguards
-                  </h3>
-                  <p className="text-body-sm text-neutral-600">
-                    If protected health information (PHI) is present
-                  </p>
+            {project.hipaaRequired && (
+              <div className="p-8 bg-white rounded-lg border border-neutral-200">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="font-heading text-lg text-espresso-600 mb-1">
+                      HIPAA UX Safeguards
+                    </h3>
+                    <p className="text-body-sm text-neutral-600">
+                      Protected health information (PHI) is present in this project
+                    </p>
+                  </div>
+                  <label className="flex items-center gap-3 cursor-pointer">
+                    <span className="text-label-base text-neutral-700">HIPAA Compliant</span>
+                    <input
+                      type="checkbox"
+                      checked={audit.hipaaCompliant || false}
+                      onChange={(e) => handleFieldChange('hipaaCompliant', e.target.checked)}
+                      className="w-6 h-6 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
+                    />
+                  </label>
                 </div>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <span className="text-label-base text-neutral-700">PHI Present</span>
-                  <input
-                    type="checkbox"
-                    checked={audit.hipaaRequired || false}
-                    onChange={(e) => handleFieldChange('hipaaRequired', e.target.checked)}
-                    className="w-6 h-6 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
-                  />
-                </label>
               </div>
-
-              {audit.hipaaRequired && (
-                <label className="flex items-center gap-3 cursor-pointer mb-4">
-                  <input
-                    type="checkbox"
-                    checked={audit.hipaaCompliant || false}
-                    onChange={(e) => handleFieldChange('hipaaCompliant', e.target.checked)}
-                    className="w-6 h-6 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
-                  />
-                  <span className="text-label-base text-neutral-700">HIPAA Compliant</span>
-                </label>
-              )}
-            </div>
+            )}
           </div>
         </section>
 
@@ -343,6 +298,18 @@ const FlowDetailPage = () => {
                   Brand Guidelines Compliant
                 </span>
               </label>
+
+              {!audit.brandGuidelinesCompliant && (
+                <div className="mb-6">
+                  <Textarea
+                    label="Areas of Non-Compliance"
+                    placeholder="Specify which areas do not comply with brand guidelines (e.g., Typography inconsistent, Color palette not followed, Custom components used)..."
+                    value={audit.brandGuidelineNonComplianceAreas || ''}
+                    onChange={(e) => handleFieldChange('brandGuidelineNonComplianceAreas', e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              )}
 
               <div className="space-y-6">
                 <Textarea

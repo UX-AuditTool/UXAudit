@@ -4,7 +4,6 @@ import Modal from '../ui/Modal';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import useStore from '../../store/useStore';
-import { Platform, Device } from '../../types';
 import { Plus, X } from 'lucide-react';
 
 interface AddFlowModalProps {
@@ -19,8 +18,6 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
 
   const [formData, setFormData] = useState({
     name: '',
-    platform: 'Web' as Platform,
-    device: 'Desktop' as Device,
     urls: [''],
   });
 
@@ -47,16 +44,12 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
     const flow = addFlow({
       projectId,
       name: formData.name,
-      platform: formData.platform,
-      device: formData.device,
       urls,
     });
 
     // Reset form
     setFormData({
       name: '',
-      platform: 'Web',
-      device: 'Desktop',
       urls: [''],
     });
     setErrors({});
@@ -113,42 +106,6 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
           required
           autoFocus
         />
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-label-base text-espresso-600 mb-1.5">
-              Platform <span className="text-error">*</span>
-            </label>
-            <select
-              value={formData.platform}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, platform: e.target.value as Platform }))
-              }
-              className="w-full h-10 px-3 rounded-base border-[1.5px] border-neutral-200 font-body text-body-sm text-espresso-500 focus:outline-none focus:border-2 focus:border-teal-500 focus:shadow-[0_0_0_3px_rgba(81,108,97,0.12)] transition-all"
-            >
-              <option value="Web">Web</option>
-              <option value="iOS">iOS</option>
-              <option value="Android">Android</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-label-base text-espresso-600 mb-1.5">
-              Device <span className="text-error">*</span>
-            </label>
-            <select
-              value={formData.device}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, device: e.target.value as Device }))
-              }
-              className="w-full h-10 px-3 rounded-base border-[1.5px] border-neutral-200 font-body text-body-sm text-espresso-500 focus:outline-none focus:border-2 focus:border-teal-500 focus:shadow-[0_0_0_3px_rgba(81,108,97,0.12)] transition-all"
-            >
-              <option value="Desktop">Desktop</option>
-              <option value="Mobile">Mobile</option>
-              <option value="Tablet">Tablet</option>
-            </select>
-          </div>
-        </div>
 
         <div>
           <label className="block text-label-base text-espresso-600 mb-1.5">

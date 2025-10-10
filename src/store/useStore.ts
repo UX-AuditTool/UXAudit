@@ -3,6 +3,7 @@ import { Project, Flow, FlowAudit, HeuristicViolation } from '../types';
 import {
   dbGetAllProjects,
   dbCreateProject,
+  dbDeleteProject,
   dbGetFlowsByProject,
   dbCreateFlow,
   dbGetOrCreateFlowAudit,
@@ -23,6 +24,7 @@ interface AppState {
 
   // Actions - Projects
   addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Project>;
+  deleteProject: (projectId: string) => Promise<void>;
   setCurrentProject: (projectId: string) => void;
 
   // Actions - Flows
@@ -80,6 +82,20 @@ const useStore = create<AppState>((set, get) => ({
       return newProject;
     } catch (error) {
       console.error('Error creating project:', error);
+      throw error;
+    }
+  },
+
+  deleteProject: async (projectId: string) => {
+    try {
+      await dbDeleteProject(projectId);
+      set((state) => ({
+        projects: state.projects.filter((p) => p.id !== projectId),
+        flows: state.flows.filter((f) => f.projectId !== projectId),
+        currentProjectId: state.currentProjectId === projectId ? null : state.currentProjectId,
+      }));
+    } catch (error) {
+      console.error('Error deleting project:', error);
       throw error;
     }
   },

@@ -290,7 +290,7 @@ const ProjectOverviewPage = () => {
                         type="checkbox"
                         checked={project.wcagCompliant || false}
                         onChange={(e) => handleFieldChange('wcagCompliant', e.target.checked)}
-                        className="w-6 h-6 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
+                        className="form-checkbox w-6 h-6 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
                       />
                     </label>
                   </div>
@@ -328,7 +328,7 @@ const ProjectOverviewPage = () => {
                           type="checkbox"
                           checked={project.hipaaCompliant || false}
                           onChange={(e) => handleFieldChange('hipaaCompliant', e.target.checked)}
-                          className="w-6 h-6 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
+                          className="form-checkbox w-6 h-6 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
                         />
                       </label>
                     </div>
@@ -361,7 +361,7 @@ const ProjectOverviewPage = () => {
                       type="checkbox"
                       checked={project.brandGuidelinesCompliant || false}
                       onChange={(e) => handleFieldChange('brandGuidelinesCompliant', e.target.checked)}
-                      className="w-6 h-6 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
+                      className="form-checkbox w-6 h-6 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
                     />
                   </label>
                 </div>

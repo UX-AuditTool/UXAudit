@@ -203,6 +203,8 @@ export default {
     },
   },
   plugins: [
-    // Add any plugins here (e.g., @tailwindcss/forms, @tailwindcss/typography)
+    require('@tailwindcss/forms')({
+      strategy: 'class', // only generate classes
+    }),
   ],
 }

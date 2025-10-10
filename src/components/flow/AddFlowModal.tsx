@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
+import Textarea from '../ui/Textarea';
 import Button from '../ui/Button';
 import useStore from '../../store/useStore';
 import { Plus, X } from 'lucide-react';
@@ -18,6 +19,7 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
 
   const [formData, setFormData] = useState({
     name: '',
+    description: '',
     urls: [''],
   });
 
@@ -45,12 +47,14 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
       const flow = await addFlow({
         projectId,
         name: formData.name,
+        description: formData.description,
         urls,
       });
 
       // Reset form
       setFormData({
         name: '',
+        description: '',
         urls: [''],
       });
       setErrors({});
@@ -110,6 +114,14 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
           error={errors.name}
           required
           autoFocus
+        />
+
+        <Textarea
+          label="Description (optional)"
+          placeholder="Describe the purpose of this flow..."
+          value={formData.description}
+          onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+          rows={3}
         />
 
         <div>

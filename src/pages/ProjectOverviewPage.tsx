@@ -108,8 +108,13 @@ const ProjectOverviewPage = () => {
                         <h3 className="font-heading text-lg text-espresso-600">
                           {flow.name}
                         </h3>
-                        {flow.urls.length > 0 && (
+                        {flow.description && (
                           <p className="text-body-sm text-neutral-600 mt-1">
+                            {flow.description}
+                          </p>
+                        )}
+                        {flow.urls.length > 0 && (
+                          <p className="text-body-xs text-neutral-500 mt-1">
                             {flow.urls.length} URL{flow.urls.length > 1 ? 's' : ''}
                           </p>
                         )}
@@ -119,7 +124,7 @@ const ProjectOverviewPage = () => {
                           <div className="text-right">
                             <p className="text-label-xs text-neutral-500 mb-1">Score</p>
                             <p className="font-heading text-2xl text-espresso-600">
-                              {score.toFixed(1)}
+                              {score.toFixed(1)}/5
                             </p>
                           </div>
                           <div className={`w-3 h-3 rounded-full ${scoreColors.bg}`} />

@@ -17,6 +17,7 @@ const dbToFlow = (row: any): Flow => ({
   id: row.id,
   projectId: row.project_id,
   name: row.name,
+  description: row.description,
   urls: row.urls || [],
   order: row.order,
   createdAt: new Date(row.created_at),
@@ -161,6 +162,7 @@ export const dbCreateFlow = async (
     .insert({
       project_id: flow.projectId,
       name: flow.name,
+      description: flow.description,
       urls: flow.urls,
       order: maxOrder + 1,
     })
@@ -177,6 +179,7 @@ export const dbUpdateFlow = async (
 ): Promise<Flow> => {
   const dbUpdates: any = {};
   if (updates.name !== undefined) dbUpdates.name = updates.name;
+  if (updates.description !== undefined) dbUpdates.description = updates.description;
   if (updates.urls !== undefined) dbUpdates.urls = updates.urls;
   if (updates.order !== undefined) dbUpdates.order = updates.order;
 

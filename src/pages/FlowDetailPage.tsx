@@ -117,6 +117,11 @@ const FlowDetailPage = () => {
           <h1 className="font-heading text-4xl text-espresso-600 mb-3">
             {flow.name} Flow
           </h1>
+          {flow.description && (
+            <p className="text-body-base text-neutral-600 mb-3">
+              {flow.description}
+            </p>
+          )}
           {flow.urls.length > 0 && (
             <div className="space-y-2">
               {flow.urls.map((url, index) => (
@@ -154,7 +159,7 @@ const FlowDetailPage = () => {
                   <p className="text-label-base text-neutral-600 mb-2">Overall Flow Score</p>
                   <div className="flex items-baseline gap-3">
                     <span className="font-heading text-4xl text-espresso-600">
-                      {score.toFixed(1)}
+                      {score.toFixed(1)}/5
                     </span>
                     <span
                       className={`inline-flex items-center px-4 py-1.5 rounded-full text-label-base font-medium ${scoreColors.bg} ${scoreColors.text}`}

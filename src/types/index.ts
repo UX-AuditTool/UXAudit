@@ -13,6 +13,7 @@ export interface Flow {
   id: string;
   projectId: string;
   name: string;
+  description?: string;
   urls: string[];
   order: number;
   createdAt: Date;

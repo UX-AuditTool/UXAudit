@@ -18,7 +18,6 @@ const ProjectOverviewPage = () => {
   const flowAudits = useStore((state) => state.flowAudits);
   const loadFlows = useStore((state) => state.loadFlows);
   const updateProject = useStore((state) => state.updateProject);
-  const updateFlow = useStore((state) => state.updateFlow);
 
   const [showAddFlowModal, setShowAddFlowModal] = useState(false);
   const [aiSummary, setAiSummary] = useState<string | null>(null);

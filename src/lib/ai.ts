@@ -104,7 +104,7 @@ export const generateProjectSummary = async (
   const flowSummaries = data.flowSummaries
     .map((flow) => {
       const notesText = flow.notes.filter(n => n.trim()).join('\n- ');
-      return `**${flow.name}** (Score: ${flow.score}/5)\n${notesText ? `- ${notesText}` : '(No detailed notes)'}`;
+      return `**${flow.flowName}** (Score: ${flow.score}/5)\n${notesText ? `- ${notesText}` : '(No detailed notes)'}`;
     })
     .join('\n\n');
 

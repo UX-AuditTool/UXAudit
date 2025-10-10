@@ -107,14 +107,14 @@ const FlowDetailPage = () => {
 
         {/* Header */}
         <div className="mb-16">
-          <div className="flex items-baseline gap-2 mb-3">
+          <div className="flex items-center gap-2 mb-3">
             <EditableTitle
               value={flow.name}
               onSave={(newName) => updateFlow(flow.id, { name: newName })}
               className="font-heading text-4xl text-espresso-600"
               inputClassName="font-heading text-4xl text-espresso-600"
             />
-            <span className="font-heading text-4xl text-espresso-600">Flow</span>
+            <span className="font-heading text-4xl text-espresso-600 self-baseline">Flow</span>
           </div>
           {flow.description && (
             <p className="text-body-base text-neutral-600 mb-3">

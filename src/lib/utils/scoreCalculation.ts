@@ -123,3 +123,44 @@ export const calculateFlowScore = (audit: FlowAudit): {
     reasoning,
   };
 };
+
+/**
+ * Calculate overall project score from flow audits
+ *
+ * Logic:
+ * 1. Calculate score for each flow
+ * 2. Average all flow scores (equal weighting)
+ * 3. Return score on 0-5 scale
+ */
+export const calculateProjectScore = (flowAudits: FlowAudit[]): {
+  score: number;
+  reasoning: string;
+  flowCount: number;
+} => {
+  // Filter to only audits with violations recorded
+  const auditsWithData = flowAudits.filter(
+    (audit) => audit.heuristicViolations && audit.heuristicViolations.length > 0
+  );
+
+  if (auditsWithData.length === 0) {
+    return {
+      score: 0,
+      reasoning: 'No flows have been evaluated yet.',
+      flowCount: 0,
+    };
+  }
+
+  // Calculate score for each flow
+  const flowScores = auditsWithData.map((audit) => calculateFlowScore(audit).score);
+
+  // Average all flow scores
+  const averageScore = flowScores.reduce((sum, score) => sum + score, 0) / flowScores.length;
+
+  const reasoning = `Average score across ${auditsWithData.length} evaluated flow${auditsWithData.length > 1 ? 's' : ''}.`;
+
+  return {
+    score: Math.round(averageScore * 10) / 10, // Round to 1 decimal
+    reasoning,
+    flowCount: auditsWithData.length,
+  };
+};

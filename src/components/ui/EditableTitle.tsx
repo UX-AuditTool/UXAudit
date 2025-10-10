@@ -97,16 +97,16 @@ const EditableTitle = ({ value, onSave, className = '', inputClassName = '' }: E
   }
 
   return (
-    <div className="group flex items-center gap-2">
-      <span className={className}>{value}</span>
+    <div className="group relative inline-flex items-center">
       <button
         type="button"
         onClick={() => setIsEditing(true)}
-        className="opacity-0 group-hover:opacity-100 p-1 text-neutral-500 hover:text-teal-600 hover:bg-teal-50 rounded-base transition-all"
+        className="absolute -left-8 opacity-0 group-hover:opacity-100 p-1 text-neutral-500 hover:text-teal-600 hover:bg-teal-50 rounded-base transition-all"
         title="Edit"
       >
         <Pencil className="h-4 w-4" />
       </button>
+      <span className={className}>{value}</span>
     </div>
   );
 };

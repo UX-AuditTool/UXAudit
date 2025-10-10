@@ -242,13 +242,9 @@ const ProjectOverviewPage = () => {
             {/* Section 1: Platform & Technical */}
             <section>
               <div className="mb-4">
-                <h2 className="font-heading text-2xl text-espresso-600 mb-2">
+                <h2 className="font-heading text-2xl text-espresso-600">
                   Platform & Technical Considerations
                 </h2>
-                <p className="text-body-sm text-neutral-600">
-                  Document platform-specific observations, technical constraints, and framework
-                  considerations.
-                </p>
               </div>
 
               <div className="p-6 bg-white rounded-lg border border-neutral-300">
@@ -272,13 +268,9 @@ const ProjectOverviewPage = () => {
             {/* Section 2: Accessibility & Compliance */}
             <section>
               <div className="mb-4">
-                <h2 className="font-heading text-2xl text-espresso-600 mb-2">
+                <h2 className="font-heading text-2xl text-espresso-600">
                   Accessibility & Compliance
                 </h2>
-                <p className="text-body-sm text-neutral-600">
-                  WCAG 2.2 AA spot-check for sighted and colorblind users, plus HIPAA safeguards if
-                  applicable.
-                </p>
               </div>
 
               <div className="space-y-4">
@@ -348,13 +340,9 @@ const ProjectOverviewPage = () => {
             {/* Section 3: Brand Guidelines */}
             <section>
               <div className="mb-4">
-                <h2 className="font-heading text-2xl text-espresso-600 mb-2">
+                <h2 className="font-heading text-2xl text-espresso-600">
                   Brand Guidelines
                 </h2>
-                <p className="text-body-sm text-neutral-600">
-                  Evaluate compliance with design system patterns, brand guidelines, and interaction
-                  quality.
-                </p>
               </div>
 
               <div className="p-6 bg-white rounded-lg border border-neutral-300">
@@ -494,12 +482,9 @@ const ProjectOverviewPage = () => {
             {/* Section 4: Usability Risks & Opportunities */}
             <section>
               <div className="mb-4">
-                <h2 className="font-heading text-2xl text-espresso-600 mb-2">
+                <h2 className="font-heading text-2xl text-espresso-600">
                   Usability Risks & Opportunities
                 </h2>
-                <p className="text-body-sm text-neutral-600">
-                  Identify efficiency blockers, error-handling patterns, and improvement opportunities.
-                </p>
               </div>
 
               <div className="space-y-4">
@@ -566,7 +551,7 @@ const ProjectOverviewPage = () => {
           <div className="col-span-1">
             <div className="sticky top-8">
               <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between">
                   <h2 className="font-heading text-2xl text-espresso-600">Flows</h2>
                   <Button
                     onClick={() => setShowAddFlowModal(true)}
@@ -576,7 +561,6 @@ const ProjectOverviewPage = () => {
                     Add
                   </Button>
                 </div>
-                <p className="text-body-sm text-neutral-600 invisible">Spacing placeholder</p>
               </div>
 
               {/* Outer container for flows */}
@@ -611,22 +595,19 @@ const ProjectOverviewPage = () => {
                           onClick={() => navigate(`/projects/${projectId}/flows/${flow.id}`)}
                         >
                           <CardContent className="p-4">
-                            <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-start justify-between gap-3 mb-2">
                               <h3 className="font-heading text-base text-espresso-600 flex-1">
                                 {flow.name}
                               </h3>
                               {hasScore && (
-                                <div className={`w-2.5 h-2.5 rounded-full ${scoreColors.bg} mt-1.5 ml-2`} />
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-label-xs font-medium ${scoreColors.bg} ${scoreColors.text} whitespace-nowrap`}>
+                                  {score.toFixed(1)}
+                                </span>
                               )}
                             </div>
                             {flow.description && (
-                              <p className="text-body-xs text-neutral-600 mb-2">
+                              <p className="text-body-xs text-neutral-600">
                                 {flow.description}
-                              </p>
-                            )}
-                            {hasScore && (
-                              <p className="text-label-xs text-neutral-500">
-                                Score: {score.toFixed(1)}/5
                               </p>
                             )}
                           </CardContent>

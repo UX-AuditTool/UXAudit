@@ -85,7 +85,7 @@ const FlowDetailPage = () => {
   };
 
   // Calculate score
-  const { score, reasoning } = calculateFlowScore(audit);
+  const { score } = calculateFlowScore(audit);
   const scoreColors = getScoreColor(score);
   const scoreLabel = getScoreLabel(score);
 

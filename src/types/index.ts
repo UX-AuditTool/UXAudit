@@ -5,6 +5,30 @@ export interface Project {
   auditGoal?: string;
   devices?: Device[];
   hipaaRequired?: boolean;
+
+  // Platform & Technical (project-level)
+  platformNotes?: string;
+
+  // Accessibility & Compliance (project-level)
+  wcagCompliant?: boolean;
+  wcagNotes?: string;
+  hipaaCompliant?: boolean;
+
+  // Brand Guidelines (project-level)
+  brandGuidelinesCompliant?: boolean;
+  brandGuidelineNonComplianceAreas?: string;
+  typographyNotes?: string;
+  colorPaletteNotes?: string;
+  iconographyNotes?: string;
+  componentUsageNotes?: string;
+  feedbackAffordancesNotes?: string;
+  responsivenessNotes?: string;
+
+  // Usability Risks & Opportunities (project-level)
+  efficiencyBlockers?: string;
+  errorHandlingNotes?: string;
+  recoveryPathsNotes?: string;
+
   createdAt: Date;
   updatedAt: Date;
 }

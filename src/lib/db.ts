@@ -9,6 +9,30 @@ const dbToProject = (row: any): Project => ({
   auditGoal: row.audit_goal,
   devices: row.devices as Device[],
   hipaaRequired: row.hipaa_required,
+
+  // Platform & Technical
+  platformNotes: row.platform_notes,
+
+  // Accessibility & Compliance
+  wcagCompliant: row.wcag_compliant,
+  wcagNotes: row.wcag_notes,
+  hipaaCompliant: row.hipaa_compliant,
+
+  // Brand Guidelines
+  brandGuidelinesCompliant: row.brand_guidelines_compliant,
+  brandGuidelineNonComplianceAreas: row.brand_guideline_non_compliance_areas,
+  typographyNotes: row.typography_notes,
+  colorPaletteNotes: row.color_palette_notes,
+  iconographyNotes: row.iconography_notes,
+  componentUsageNotes: row.component_usage_notes,
+  feedbackAffordancesNotes: row.feedback_affordances_notes,
+  responsivenessNotes: row.responsiveness_notes,
+
+  // Usability Risks & Opportunities
+  efficiencyBlockers: row.efficiency_blockers,
+  errorHandlingNotes: row.error_handling_notes,
+  recoveryPathsNotes: row.recovery_paths_notes,
+
   createdAt: new Date(row.created_at),
   updatedAt: new Date(row.updated_at),
 });
@@ -101,6 +125,32 @@ export const dbUpdateProject = async (
   if (updates.auditGoal !== undefined) dbUpdates.audit_goal = updates.auditGoal;
   if (updates.devices !== undefined) dbUpdates.devices = updates.devices;
   if (updates.hipaaRequired !== undefined) dbUpdates.hipaa_required = updates.hipaaRequired;
+
+  // Platform & Technical
+  if (updates.platformNotes !== undefined) dbUpdates.platform_notes = updates.platformNotes;
+
+  // Accessibility & Compliance
+  if (updates.wcagCompliant !== undefined) dbUpdates.wcag_compliant = updates.wcagCompliant;
+  if (updates.wcagNotes !== undefined) dbUpdates.wcag_notes = updates.wcagNotes;
+  if (updates.hipaaCompliant !== undefined) dbUpdates.hipaa_compliant = updates.hipaaCompliant;
+
+  // Brand Guidelines
+  if (updates.brandGuidelinesCompliant !== undefined)
+    dbUpdates.brand_guidelines_compliant = updates.brandGuidelinesCompliant;
+  if (updates.brandGuidelineNonComplianceAreas !== undefined)
+    dbUpdates.brand_guideline_non_compliance_areas = updates.brandGuidelineNonComplianceAreas;
+  if (updates.typographyNotes !== undefined) dbUpdates.typography_notes = updates.typographyNotes;
+  if (updates.colorPaletteNotes !== undefined) dbUpdates.color_palette_notes = updates.colorPaletteNotes;
+  if (updates.iconographyNotes !== undefined) dbUpdates.iconography_notes = updates.iconographyNotes;
+  if (updates.componentUsageNotes !== undefined) dbUpdates.component_usage_notes = updates.componentUsageNotes;
+  if (updates.feedbackAffordancesNotes !== undefined)
+    dbUpdates.feedback_affordances_notes = updates.feedbackAffordancesNotes;
+  if (updates.responsivenessNotes !== undefined) dbUpdates.responsiveness_notes = updates.responsivenessNotes;
+
+  // Usability Risks & Opportunities
+  if (updates.efficiencyBlockers !== undefined) dbUpdates.efficiency_blockers = updates.efficiencyBlockers;
+  if (updates.errorHandlingNotes !== undefined) dbUpdates.error_handling_notes = updates.errorHandlingNotes;
+  if (updates.recoveryPathsNotes !== undefined) dbUpdates.recovery_paths_notes = updates.recoveryPathsNotes;
 
   const { data, error } = await supabase
     .from('projects')

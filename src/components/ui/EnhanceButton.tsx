@@ -43,10 +43,10 @@ const EnhanceButton = ({ currentText, context, onEnhanced, className = '' }: Enh
             ? 'text-neutral-400 cursor-wait'
             : 'text-sage-600 hover:text-sage-700'
         } ${className}`}
-        title="Enhance with AI"
+        title="Polish with AI"
       >
         <Sparkles className={`h-3.5 w-3.5 ${isEnhancing ? 'animate-pulse' : ''}`} />
-        <span>{isEnhancing ? 'Enhancing...' : 'Enhance with AI'}</span>
+        <span>{isEnhancing ? 'Polishing...' : 'Polish with AI'}</span>
       </button>
       {error && (
         <div className="absolute top-full mt-1 left-0 right-0 text-label-xs text-error bg-red-50 px-2 py-1 rounded-base">

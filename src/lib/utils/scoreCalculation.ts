@@ -109,9 +109,9 @@ export const calculateFlowScore = (audit: FlowAudit): {
     violationParts.push(`${severityCounts.Low} Low`);
   }
 
-  const totalViolations = Object.values(severityCounts)
-    .filter((_, key) => key !== 'None')
-    .reduce((sum, count) => sum + count, 0);
+  const totalViolations = Object.entries(severityCounts)
+    .filter(([key]) => key !== 'None')
+    .reduce((sum, [, count]) => sum + count, 0);
 
   const reasoning =
     totalViolations > 0

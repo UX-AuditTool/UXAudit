@@ -85,15 +85,10 @@ const ScreenshotUpload = ({ screenshots, onUpload, onRemove }: ScreenshotUploadP
         />
 
         <div className="flex items-center justify-center gap-3">
-          <Upload className="h-5 w-5 text-neutral-400" />
-          <div className="text-left">
-            <p className="text-body-sm text-neutral-600 font-medium">
-              Drop screenshots here or click to browse
-            </p>
-            <p className="text-body-xs text-neutral-500">
-              PNG, JPG up to 10MB
-            </p>
-          </div>
+          <Upload className="h-5 w-5 text-sage-600" />
+          <p className="text-body-sm text-neutral-600 font-medium">
+            Drop screenshots here or click to browse
+          </p>
         </div>
       </div>
 

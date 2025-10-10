@@ -1,5 +1,13 @@
 import { create } from 'zustand';
 import { Project, Flow, FlowAudit, HeuristicViolation } from '../types';
+import {
+  dbGetAllProjects,
+  dbCreateProject,
+  dbGetFlowsByProject,
+  dbCreateFlow,
+  dbGetOrCreateFlowAudit,
+  dbUpdateFlowAudit,
+} from '../lib/db';
 
 interface AppState {
   // Data
@@ -7,19 +15,24 @@ interface AppState {
   flows: Flow[];
   flowAudits: FlowAudit[];
   currentProjectId: string | null;
+  isLoading: boolean;
+
+  // Actions - Init
+  loadProjects: () => Promise<void>;
+  loadFlows: (projectId: string) => Promise<void>;
 
   // Actions - Projects
-  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => Project;
+  addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Project>;
   setCurrentProject: (projectId: string) => void;
 
   // Actions - Flows
-  addFlow: (flow: Omit<Flow, 'id' | 'createdAt' | 'updatedAt' | 'order'>) => Flow;
+  addFlow: (flow: Omit<Flow, 'id' | 'createdAt' | 'updatedAt' | 'order'>) => Promise<Flow>;
   getFlowsByProject: (projectId: string) => Flow[];
 
   // Actions - Flow Audits
   getOrCreateFlowAudit: (flowId: string) => FlowAudit;
-  updateFlowAudit: (flowId: string, updates: Partial<Omit<FlowAudit, 'id' | 'flowId' | 'createdAt' | 'updatedAt'>>) => void;
-  updateHeuristicViolation: (flowId: string, violation: HeuristicViolation) => void;
+  updateFlowAudit: (flowId: string, updates: Partial<Omit<FlowAudit, 'id' | 'flowId' | 'createdAt' | 'updatedAt'>>) => Promise<void>;
+  updateHeuristicViolation: (flowId: string, violation: HeuristicViolation) => Promise<void>;
 }
 
 const useStore = create<AppState>((set, get) => ({
@@ -28,22 +41,47 @@ const useStore = create<AppState>((set, get) => ({
   flows: [],
   flowAudits: [],
   currentProjectId: null,
+  isLoading: false,
+
+  // Load data from database
+  loadProjects: async () => {
+    try {
+      set({ isLoading: true });
+      const projects = await dbGetAllProjects();
+      set({ projects, isLoading: false });
+    } catch (error) {
+      console.error('Error loading projects:', error);
+      set({ isLoading: false });
+    }
+  },
+
+  loadFlows: async (projectId: string) => {
+    try {
+      const flows = await dbGetFlowsByProject(projectId);
+      set((state) => ({
+        flows: [
+          ...state.flows.filter((f) => f.projectId !== projectId),
+          ...flows,
+        ],
+      }));
+    } catch (error) {
+      console.error('Error loading flows:', error);
+    }
+  },
 
   // Project actions
-  addProject: (projectData) => {
-    const newProject: Project = {
-      ...projectData,
-      id: `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    set((state) => ({
-      projects: [...state.projects, newProject],
-      currentProjectId: newProject.id,
-    }));
-
-    return newProject;
+  addProject: async (projectData) => {
+    try {
+      const newProject = await dbCreateProject(projectData);
+      set((state) => ({
+        projects: [...state.projects, newProject],
+        currentProjectId: newProject.id,
+      }));
+      return newProject;
+    } catch (error) {
+      console.error('Error creating project:', error);
+      throw error;
+    }
   },
 
   setCurrentProject: (projectId) => {
@@ -51,23 +89,17 @@ const useStore = create<AppState>((set, get) => ({
   },
 
   // Flow actions
-  addFlow: (flowData) => {
-    const flows = get().flows.filter((f) => f.projectId === flowData.projectId);
-    const maxOrder = flows.length > 0 ? Math.max(...flows.map((f) => f.order)) : -1;
-
-    const newFlow: Flow = {
-      ...flowData,
-      id: `flow-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      order: maxOrder + 1,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    set((state) => ({
-      flows: [...state.flows, newFlow],
-    }));
-
-    return newFlow;
+  addFlow: async (flowData) => {
+    try {
+      const newFlow = await dbCreateFlow(flowData);
+      set((state) => ({
+        flows: [...state.flows, newFlow],
+      }));
+      return newFlow;
+    } catch (error) {
+      console.error('Error creating flow:', error);
+      throw error;
+    }
   },
 
   getFlowsByProject: (projectId) => {
@@ -81,8 +113,9 @@ const useStore = create<AppState>((set, get) => ({
     const existing = get().flowAudits.find((a) => a.flowId === flowId);
     if (existing) return existing;
 
+    // Create placeholder - will be synced with DB on first update
     const newAudit: FlowAudit = {
-      id: `audit-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `audit-temp-${Date.now()}`,
       flowId,
       heuristicViolations: [],
       createdAt: new Date(),
@@ -93,20 +126,51 @@ const useStore = create<AppState>((set, get) => ({
       flowAudits: [...state.flowAudits, newAudit],
     }));
 
+    // Load from DB in background
+    dbGetOrCreateFlowAudit(flowId).then((dbAudit) => {
+      set((state) => ({
+        flowAudits: state.flowAudits.map((audit) =>
+          audit.flowId === flowId ? dbAudit : audit
+        ),
+      }));
+    });
+
     return newAudit;
   },
 
-  updateFlowAudit: (flowId, updates) => {
-    set((state) => ({
-      flowAudits: state.flowAudits.map((audit) =>
-        audit.flowId === flowId
-          ? { ...audit, ...updates, updatedAt: new Date() }
-          : audit
-      ),
-    }));
+  updateFlowAudit: async (flowId, updates) => {
+    try {
+      // Optimistic update
+      set((state) => ({
+        flowAudits: state.flowAudits.map((audit) =>
+          audit.flowId === flowId
+            ? { ...audit, ...updates, updatedAt: new Date() }
+            : audit
+        ),
+      }));
+
+      // Persist to database
+      const updatedAudit = await dbUpdateFlowAudit(flowId, updates);
+
+      // Update with server response
+      set((state) => ({
+        flowAudits: state.flowAudits.map((audit) =>
+          audit.flowId === flowId ? updatedAudit : audit
+        ),
+      }));
+    } catch (error) {
+      console.error('Error updating flow audit:', error);
+      // Reload from DB on error
+      const dbAudit = await dbGetOrCreateFlowAudit(flowId);
+      set((state) => ({
+        flowAudits: state.flowAudits.map((audit) =>
+          audit.flowId === flowId ? dbAudit : audit
+        ),
+      }));
+    }
   },
 
-  updateHeuristicViolation: (flowId, violation) => {
+  updateHeuristicViolation: async (flowId, violation) => {
     const audit = get().getOrCreateFlowAudit(flowId);
     const existingIndex = audit.heuristicViolations.findIndex(
       (v) => v.heuristic === violation.heuristic
@@ -119,7 +183,7 @@ const useStore = create<AppState>((set, get) => ({
       updatedViolations.push(violation);
     }
 
-    get().updateFlowAudit(flowId, {
+    await get().updateFlowAudit(flowId, {
       heuristicViolations: updatedViolations,
     });
   },

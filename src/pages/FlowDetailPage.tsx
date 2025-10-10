@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import useStore from '../store/useStore';
 import Textarea from '../components/ui/Textarea';
 import HeuristicCarousel from '../components/audit/HeuristicCarousel';
@@ -101,45 +101,54 @@ const FlowDetailPage = () => {
       <div className="max-w-4xl mx-auto px-8 py-12">
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-2 text-body-sm text-neutral-600 mb-8">
-          <a href="/" className="hover:text-teal-500 transition-colors">
+          <Link to="/" className="hover:text-teal-500 transition-colors">
             Home
-          </a>
+          </Link>
           <span>/</span>
-          <a href={`/projects/${projectId}`} className="hover:text-teal-500 transition-colors">
+          <Link to={`/projects/${projectId}`} className="hover:text-teal-500 transition-colors">
             {project.name}
-          </a>
+          </Link>
           <span>/</span>
           <span className="text-espresso-600 font-medium">{flow.name}</span>
         </nav>
 
         {/* Header */}
         <div className="mb-16">
-          <div className="flex items-start gap-6 mb-4">
-            <div className="flex-1">
-              <h1 className="font-heading text-4xl text-espresso-600 mb-3">
-                {flow.name}
-              </h1>
-              {flow.urls.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  {flow.urls.map((url, index) => (
-                    <a
-                      key={index}
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-body-sm text-teal-500 hover:underline"
-                    >
-                      {url}
-                    </a>
-                  ))}
-                </div>
-              )}
+          <h1 className="font-heading text-4xl text-espresso-600 mb-3">
+            {flow.name} Flow
+          </h1>
+          {flow.urls.length > 0 && (
+            <div className="space-y-2">
+              {flow.urls.map((url, index) => (
+                <a
+                  key={index}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-body-sm text-teal-500 hover:underline"
+                >
+                  {url}
+                </a>
+              ))}
             </div>
+          )}
+        </div>
+
+        {/* Section 1: Heuristic Violations */}
+        <section className="mb-20">
+          <div className="mb-8">
+            <h2 className="font-heading text-3xl text-espresso-600 mb-3">
+              Heuristic Violations
+            </h2>
+            <p className="text-body-base text-neutral-600">
+              Evaluate this flow against Nielsen's 10 usability heuristics. Rate the severity of
+              violations found for each principle.
+            </p>
           </div>
 
-          {/* Overall Score */}
+          {/* Overall Score Card */}
           {score > 0 && (
-            <div className="mt-8 p-6 bg-white rounded-lg border-2 border-neutral-200">
+            <div className="mb-8 p-6 bg-white rounded-lg border-2 border-neutral-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-label-base text-neutral-600 mb-2">Overall Flow Score</p>
@@ -158,19 +167,6 @@ const FlowDetailPage = () => {
               <p className="text-body-sm text-neutral-600 mt-4">{reasoning}</p>
             </div>
           )}
-        </div>
-
-        {/* Section 1: Heuristic Violations */}
-        <section className="mb-20">
-          <div className="mb-8">
-            <h2 className="font-heading text-3xl text-espresso-600 mb-3">
-              Heuristic Violations
-            </h2>
-            <p className="text-body-base text-neutral-600">
-              Evaluate this flow against Nielsen's 10 usability heuristics. Rate the severity of
-              violations found for each principle.
-            </p>
-          </div>
 
           <HeuristicCarousel
             heuristics={HEURISTICS}
@@ -273,11 +269,11 @@ const FlowDetailPage = () => {
           </div>
         </section>
 
-        {/* Section 4: Design System Assessment */}
+        {/* Section 4: Brand Guidelines */}
         <section className="mb-20">
           <div className="mb-8">
             <h2 className="font-heading text-3xl text-espresso-600 mb-3">
-              Visual & Interaction Design Assessment
+              Brand Guidelines
             </h2>
             <p className="text-body-base text-neutral-600">
               Evaluate compliance with design system patterns, brand guidelines, and interaction
@@ -287,17 +283,25 @@ const FlowDetailPage = () => {
 
           <div className="space-y-6">
             <div className="p-8 bg-white rounded-lg border border-neutral-200">
-              <label className="flex items-center gap-3 cursor-pointer mb-6">
-                <input
-                  type="checkbox"
-                  checked={audit.brandGuidelinesCompliant || false}
-                  onChange={(e) => handleFieldChange('brandGuidelinesCompliant', e.target.checked)}
-                  className="w-6 h-6 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
-                />
-                <span className="font-heading text-lg text-espresso-600">
-                  Brand Guidelines Compliant
-                </span>
-              </label>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="font-heading text-lg text-espresso-600 mb-1">
+                    Brand Guidelines Compliance
+                  </h3>
+                  <p className="text-body-sm text-neutral-600">
+                    Visual design aligns with established brand standards
+                  </p>
+                </div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <span className="text-label-base text-neutral-700">Compliant</span>
+                  <input
+                    type="checkbox"
+                    checked={audit.brandGuidelinesCompliant || false}
+                    onChange={(e) => handleFieldChange('brandGuidelinesCompliant', e.target.checked)}
+                    className="w-6 h-6 rounded border-2 border-neutral-300 text-sage-500 focus:ring-2 focus:ring-sage-500 focus:ring-offset-2"
+                  />
+                </label>
+              </div>
 
               {!audit.brandGuidelinesCompliant && (
                 <div className="mb-6">

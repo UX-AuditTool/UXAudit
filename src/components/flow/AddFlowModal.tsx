@@ -23,7 +23,7 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
@@ -37,26 +37,31 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
       return;
     }
 
-    // Filter out empty URLs
-    const urls = formData.urls.filter((url) => url.trim() !== '');
+    try {
+      // Filter out empty URLs
+      const urls = formData.urls.filter((url) => url.trim() !== '');
 
-    // Create flow
-    const flow = addFlow({
-      projectId,
-      name: formData.name,
-      urls,
-    });
+      // Create flow
+      const flow = await addFlow({
+        projectId,
+        name: formData.name,
+        urls,
+      });
 
-    // Reset form
-    setFormData({
-      name: '',
-      urls: [''],
-    });
-    setErrors({});
+      // Reset form
+      setFormData({
+        name: '',
+        urls: [''],
+      });
+      setErrors({});
 
-    // Close modal and navigate to flow
-    onOpenChange(false);
-    navigate(`/projects/${projectId}/flows/${flow.id}`);
+      // Close modal and navigate to flow
+      onOpenChange(false);
+      navigate(`/projects/${projectId}/flows/${flow.id}`);
+    } catch (error) {
+      console.error('Failed to create flow:', error);
+      setErrors({ submit: 'Failed to create flow. Please try again.' });
+    }
   };
 
   const handleAddUrl = () => {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, FolderOpen } from 'lucide-react';
 import useStore from '../store/useStore';
@@ -11,9 +11,16 @@ import { format } from 'date-fns';
 const DashboardPage = () => {
   const navigate = useNavigate();
   const projects = useStore((state) => state.projects);
+  const loadProjects = useStore((state) => state.loadProjects);
+  const isLoading = useStore((state) => state.isLoading);
   const setCurrentProject = useStore((state) => state.setCurrentProject);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Load projects from database on mount
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects]);
 
   const handleProjectClick = (projectId: string) => {
     setCurrentProject(projectId);
@@ -43,7 +50,11 @@ const DashboardPage = () => {
         </div>
 
         {/* Projects Grid */}
-        {projects.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-body-base text-neutral-600">Loading projects...</p>
+          </div>
+        ) : projects.length === 0 ? (
           <Card>
             <EmptyState
               icon={<FolderOpen className="h-16 w-16" />}

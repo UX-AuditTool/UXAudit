@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import Textarea from '../ui/Textarea';
 import SeveritySelector from './SeveritySelector';
 import ScreenshotUpload from './ScreenshotUpload';
 import { Heuristic, Severity, HeuristicViolation } from '../../types';
 import { HeuristicDefinition } from '../../lib/constants/heuristics';
+import arrowSvg from '../../../assets/arrows.svg';
 
 interface HeuristicCarouselProps {
   heuristics: HeuristicDefinition[];
@@ -44,16 +45,21 @@ const HeuristicCarousel = ({
           onClick={goToPrevious}
           disabled={currentIndex === 0}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
+            p-2 rounded-lg transition-all
             ${
               currentIndex === 0
-                ? 'text-neutral-400 cursor-not-allowed'
-                : 'text-espresso-600 hover:bg-sage-50 active:bg-sage-100'
+                ? 'opacity-30 cursor-not-allowed'
+                : 'hover:bg-sage-50 active:bg-sage-100'
             }
           `}
+          aria-label="Previous heuristic"
         >
-          <ChevronLeft className="h-5 w-5" />
-          <span>Previous</span>
+          <img
+            src={arrowSvg}
+            alt="Previous"
+            className="h-8 w-8 rotate-180"
+            style={{ filter: currentIndex === 0 ? 'none' : 'invert(56%) sepia(18%) saturate(609%) hue-rotate(28deg) brightness(91%) contrast(86%)' }}
+          />
         </button>
 
         {/* Progress Indicators */}
@@ -76,16 +82,21 @@ const HeuristicCarousel = ({
           onClick={goToNext}
           disabled={currentIndex === heuristics.length - 1}
           className={`
-            flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
+            p-2 rounded-lg transition-all
             ${
               currentIndex === heuristics.length - 1
-                ? 'text-neutral-400 cursor-not-allowed'
-                : 'text-espresso-600 hover:bg-sage-50 active:bg-sage-100'
+                ? 'opacity-30 cursor-not-allowed'
+                : 'hover:bg-sage-50 active:bg-sage-100'
             }
           `}
+          aria-label="Next heuristic"
         >
-          <span>Next</span>
-          <ChevronRight className="h-5 w-5" />
+          <img
+            src={arrowSvg}
+            alt="Next"
+            className="h-8 w-8"
+            style={{ filter: currentIndex === heuristics.length - 1 ? 'none' : 'invert(56%) sepia(18%) saturate(609%) hue-rotate(28deg) brightness(91%) contrast(86%)' }}
+          />
         </button>
       </div>
 

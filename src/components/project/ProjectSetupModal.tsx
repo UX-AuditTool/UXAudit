@@ -27,7 +27,7 @@ const ProjectSetupModal = ({ open, onOpenChange }: ProjectSetupModalProps) => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
@@ -44,28 +44,33 @@ const ProjectSetupModal = ({ open, onOpenChange }: ProjectSetupModalProps) => {
       return;
     }
 
-    // Create project
-    const project = addProject({
-      name: formData.name,
-      clientName: formData.clientName,
-      auditGoal: formData.auditGoal || undefined,
-      devices: formData.devices.length > 0 ? formData.devices : undefined,
-      hipaaRequired: formData.hipaaRequired,
-    });
+    try {
+      // Create project
+      const project = await addProject({
+        name: formData.name,
+        clientName: formData.clientName,
+        auditGoal: formData.auditGoal || undefined,
+        devices: formData.devices.length > 0 ? formData.devices : undefined,
+        hipaaRequired: formData.hipaaRequired,
+      });
 
-    // Reset form
-    setFormData({
-      name: '',
-      clientName: '',
-      auditGoal: '',
-      devices: [],
-      hipaaRequired: false,
-    });
-    setErrors({});
+      // Reset form
+      setFormData({
+        name: '',
+        clientName: '',
+        auditGoal: '',
+        devices: [],
+        hipaaRequired: false,
+      });
+      setErrors({});
 
-    // Close modal and navigate to project
-    onOpenChange(false);
-    navigate(`/projects/${project.id}`);
+      // Close modal and navigate to project
+      onOpenChange(false);
+      navigate(`/projects/${project.id}`);
+    } catch (error) {
+      console.error('Failed to create project:', error);
+      setErrors({ submit: 'Failed to create project. Please try again.' });
+    }
   };
 
   const handleChange = (field: string, value: string) => {

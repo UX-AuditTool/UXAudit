@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Plus, Workflow } from 'lucide-react';
 import useStore from '../store/useStore';
 import Button from '../components/ui/Button';
@@ -8,11 +8,20 @@ import EmptyState from '../components/ui/EmptyState';
 import AddFlowModal from '../components/flow/AddFlowModal';
 
 const ProjectOverviewPage = () => {
+  const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
   const project = useStore((state) => state.projects.find((p) => p.id === projectId));
   const flows = useStore((state) => state.getFlowsByProject(projectId!));
+  const loadFlows = useStore((state) => state.loadFlows);
 
   const [showAddFlowModal, setShowAddFlowModal] = useState(false);
+
+  // Load flows when project loads
+  useEffect(() => {
+    if (projectId) {
+      loadFlows(projectId);
+    }
+  }, [projectId, loadFlows]);
 
   if (!project) {
     return (
@@ -27,9 +36,9 @@ const ProjectOverviewPage = () => {
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-2 text-body-sm text-neutral-600 mb-6">
-          <a href="/" className="hover:text-teal-500 transition-colors">
+          <Link to="/" className="hover:text-teal-500 transition-colors">
             Home
-          </a>
+          </Link>
           <span>/</span>
           <span className="text-espresso-600 font-medium">{project.name}</span>
         </nav>
@@ -84,26 +93,18 @@ const ProjectOverviewPage = () => {
                 <Card
                   key={flow.id}
                   hover
-                  onClick={() => {
-                    window.location.href = `/projects/${projectId}/flows/${flow.id}`;
-                  }}
+                  onClick={() => navigate(`/projects/${projectId}/flows/${flow.id}`)}
                 >
                   <CardContent className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="text-2xl">
-                        {flow.platform === 'Web' ? '🌐' : flow.platform === 'iOS' ? '📱' : '🤖'}
-                      </div>
-                      <div>
-                        <h3 className="font-heading text-lg text-espresso-600">
-                          {flow.name}
-                        </h3>
-                        <p className="text-body-sm text-neutral-600">
-                          {flow.platform} · {flow.device}
+                    <div>
+                      <h3 className="font-heading text-lg text-espresso-600">
+                        {flow.name}
+                      </h3>
+                      {flow.urls.length > 0 && (
+                        <p className="text-body-sm text-neutral-600 mt-1">
+                          {flow.urls.length} URL{flow.urls.length > 1 ? 's' : ''}
                         </p>
-                      </div>
-                    </div>
-                    <div className="text-body-sm text-neutral-500">
-                      {flow.urls.length > 0 && `${flow.urls.length} URL${flow.urls.length > 1 ? 's' : ''}`}
+                      )}
                     </div>
                   </CardContent>
                 </Card>

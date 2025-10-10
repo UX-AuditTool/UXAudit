@@ -6,6 +6,7 @@ import Button from '../components/ui/Button';
 import Card, { CardContent } from '../components/ui/Card';
 import EmptyState from '../components/ui/EmptyState';
 import AddFlowModal from '../components/flow/AddFlowModal';
+import EditableTitle from '../components/ui/EditableTitle';
 import { calculateFlowScore, getScoreColor } from '../lib/utils/scoreCalculation';
 
 const ProjectOverviewPage = () => {
@@ -15,6 +16,8 @@ const ProjectOverviewPage = () => {
   const flows = useStore((state) => state.getFlowsByProject(projectId!));
   const flowAudits = useStore((state) => state.flowAudits);
   const loadFlows = useStore((state) => state.loadFlows);
+  const updateProject = useStore((state) => state.updateProject);
+  const updateFlow = useStore((state) => state.updateFlow);
 
   const [showAddFlowModal, setShowAddFlowModal] = useState(false);
 
@@ -47,9 +50,12 @@ const ProjectOverviewPage = () => {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="font-heading text-4xl text-espresso-600 mb-2">
-            {project.name}
-          </h1>
+          <EditableTitle
+            value={project.name}
+            onSave={(newName) => updateProject(project.id, { name: newName })}
+            className="font-heading text-4xl text-espresso-600 mb-2"
+            inputClassName="font-heading text-4xl text-espresso-600"
+          />
           <p className="text-body-base text-neutral-600">
             {project.clientName}
           </p>

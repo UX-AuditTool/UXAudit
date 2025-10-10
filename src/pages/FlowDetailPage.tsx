@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import useStore from '../store/useStore';
 import Textarea from '../components/ui/Textarea';
+import EditableTitle from '../components/ui/EditableTitle';
 import HeuristicCarousel from '../components/audit/HeuristicCarousel';
+import EnhanceButton from '../components/ui/EnhanceButton';
 import { HEURISTICS } from '../lib/constants/heuristics';
 import { Heuristic, Severity } from '../types';
 import { calculateFlowScore, getScoreLabel, getScoreColor } from '../lib/utils/scoreCalculation';
@@ -11,19 +13,18 @@ const FlowDetailPage = () => {
   const { projectId, flowId } = useParams<{ projectId: string; flowId: string }>();
   const project = useStore((state) => state.projects.find((p) => p.id === projectId));
   const flow = useStore((state) => state.flows.find((f) => f.id === flowId));
+  const audit = useStore((state) => state.flowAudits.find((a) => a.flowId === flowId));
   const getOrCreateFlowAudit = useStore((state) => state.getOrCreateFlowAudit);
   const updateHeuristicViolation = useStore((state) => state.updateHeuristicViolation);
   const updateFlowAudit = useStore((state) => state.updateFlowAudit);
+  const updateFlow = useStore((state) => state.updateFlow);
 
-  const [audit, setAudit] = useState(() => flowId ? getOrCreateFlowAudit(flowId) : null);
-
-  // Auto-save on changes
+  // Initialize audit on mount
   useEffect(() => {
-    if (flowId) {
-      const currentAudit = getOrCreateFlowAudit(flowId);
-      setAudit(currentAudit);
+    if (flowId && !audit) {
+      getOrCreateFlowAudit(flowId);
     }
-  }, [flowId, getOrCreateFlowAudit]);
+  }, [flowId, audit, getOrCreateFlowAudit]);
 
   if (!project || !flow || !audit) {
     return (
@@ -46,9 +47,6 @@ const FlowDetailPage = () => {
       ...violation,
       severity,
     });
-
-    // Refresh audit
-    setAudit(getOrCreateFlowAudit(flowId));
   };
 
   const handleHeuristicNotesChange = (heuristic: Heuristic, notes: string) => {
@@ -64,8 +62,6 @@ const FlowDetailPage = () => {
       ...violation,
       notes,
     });
-
-    setAudit(getOrCreateFlowAudit(flowId));
   };
 
   const handleHeuristicScreenshotsChange = (heuristic: Heuristic, screenshotIds: string[]) => {
@@ -81,14 +77,11 @@ const FlowDetailPage = () => {
       ...violation,
       screenshotIds,
     });
-
-    setAudit(getOrCreateFlowAudit(flowId));
   };
 
   const handleFieldChange = (field: string, value: string | boolean) => {
     if (!flowId) return;
     updateFlowAudit(flowId, { [field]: value });
-    setAudit(getOrCreateFlowAudit(flowId));
   };
 
   // Calculate score
@@ -114,9 +107,15 @@ const FlowDetailPage = () => {
 
         {/* Header */}
         <div className="mb-16">
-          <h1 className="font-heading text-4xl text-espresso-600 mb-3">
-            {flow.name} Flow
-          </h1>
+          <div className="flex items-baseline gap-2 mb-3">
+            <EditableTitle
+              value={flow.name}
+              onSave={(newName) => updateFlow(flow.id, { name: newName })}
+              className="font-heading text-4xl text-espresso-600"
+              inputClassName="font-heading text-4xl text-espresso-600"
+            />
+            <span className="font-heading text-4xl text-espresso-600">Flow</span>
+          </div>
           {flow.description && (
             <p className="text-body-base text-neutral-600 mb-3">
               {flow.description}
@@ -201,6 +200,13 @@ const FlowDetailPage = () => {
               value={audit.platformNotes || ''}
               onChange={(e) => handleFieldChange('platformNotes', e.target.value)}
               rows={5}
+              enhanceButton={
+                <EnhanceButton
+                  currentText={audit.platformNotes || ''}
+                  context={{ type: 'general' }}
+                  onEnhanced={(enhancedText) => handleFieldChange('platformNotes', enhancedText)}
+                />
+              }
             />
           </div>
         </section>
@@ -245,6 +251,13 @@ const FlowDetailPage = () => {
                 value={audit.wcagNotes || ''}
                 onChange={(e) => handleFieldChange('wcagNotes', e.target.value)}
                 rows={4}
+                enhanceButton={
+                  <EnhanceButton
+                    currentText={audit.wcagNotes || ''}
+                    context={{ type: 'wcag' }}
+                    onEnhanced={(enhancedText) => handleFieldChange('wcagNotes', enhancedText)}
+                  />
+                }
               />
             </div>
 
@@ -316,6 +329,13 @@ const FlowDetailPage = () => {
                     value={audit.brandGuidelineNonComplianceAreas || ''}
                     onChange={(e) => handleFieldChange('brandGuidelineNonComplianceAreas', e.target.value)}
                     rows={3}
+                    enhanceButton={
+                      <EnhanceButton
+                        currentText={audit.brandGuidelineNonComplianceAreas || ''}
+                        context={{ type: 'brand' }}
+                        onEnhanced={(enhancedText) => handleFieldChange('brandGuidelineNonComplianceAreas', enhancedText)}
+                      />
+                    }
                   />
                 </div>
               )}
@@ -327,6 +347,13 @@ const FlowDetailPage = () => {
                   value={audit.typographyNotes || ''}
                   onChange={(e) => handleFieldChange('typographyNotes', e.target.value)}
                   rows={3}
+                  enhanceButton={
+                    <EnhanceButton
+                      currentText={audit.typographyNotes || ''}
+                      context={{ type: 'brand' }}
+                      onEnhanced={(enhancedText) => handleFieldChange('typographyNotes', enhancedText)}
+                    />
+                  }
                 />
 
                 <Textarea
@@ -335,6 +362,13 @@ const FlowDetailPage = () => {
                   value={audit.colorPaletteNotes || ''}
                   onChange={(e) => handleFieldChange('colorPaletteNotes', e.target.value)}
                   rows={3}
+                  enhanceButton={
+                    <EnhanceButton
+                      currentText={audit.colorPaletteNotes || ''}
+                      context={{ type: 'brand' }}
+                      onEnhanced={(enhancedText) => handleFieldChange('colorPaletteNotes', enhancedText)}
+                    />
+                  }
                 />
 
                 <Textarea
@@ -343,6 +377,13 @@ const FlowDetailPage = () => {
                   value={audit.iconographyNotes || ''}
                   onChange={(e) => handleFieldChange('iconographyNotes', e.target.value)}
                   rows={3}
+                  enhanceButton={
+                    <EnhanceButton
+                      currentText={audit.iconographyNotes || ''}
+                      context={{ type: 'brand' }}
+                      onEnhanced={(enhancedText) => handleFieldChange('iconographyNotes', enhancedText)}
+                    />
+                  }
                 />
 
                 <Textarea
@@ -351,6 +392,13 @@ const FlowDetailPage = () => {
                   value={audit.componentUsageNotes || ''}
                   onChange={(e) => handleFieldChange('componentUsageNotes', e.target.value)}
                   rows={3}
+                  enhanceButton={
+                    <EnhanceButton
+                      currentText={audit.componentUsageNotes || ''}
+                      context={{ type: 'brand' }}
+                      onEnhanced={(enhancedText) => handleFieldChange('componentUsageNotes', enhancedText)}
+                    />
+                  }
                 />
 
                 <Textarea
@@ -359,6 +407,13 @@ const FlowDetailPage = () => {
                   value={audit.feedbackAffordancesNotes || ''}
                   onChange={(e) => handleFieldChange('feedbackAffordancesNotes', e.target.value)}
                   rows={3}
+                  enhanceButton={
+                    <EnhanceButton
+                      currentText={audit.feedbackAffordancesNotes || ''}
+                      context={{ type: 'brand' }}
+                      onEnhanced={(enhancedText) => handleFieldChange('feedbackAffordancesNotes', enhancedText)}
+                    />
+                  }
                 />
 
                 <Textarea
@@ -367,6 +422,13 @@ const FlowDetailPage = () => {
                   value={audit.responsivenessNotes || ''}
                   onChange={(e) => handleFieldChange('responsivenessNotes', e.target.value)}
                   rows={3}
+                  enhanceButton={
+                    <EnhanceButton
+                      currentText={audit.responsivenessNotes || ''}
+                      context={{ type: 'brand' }}
+                      onEnhanced={(enhancedText) => handleFieldChange('responsivenessNotes', enhancedText)}
+                    />
+                  }
                 />
               </div>
             </div>
@@ -392,6 +454,13 @@ const FlowDetailPage = () => {
                 value={audit.efficiencyBlockers || ''}
                 onChange={(e) => handleFieldChange('efficiencyBlockers', e.target.value)}
                 rows={4}
+                enhanceButton={
+                  <EnhanceButton
+                    currentText={audit.efficiencyBlockers || ''}
+                    context={{ type: 'general' }}
+                    onEnhanced={(enhancedText) => handleFieldChange('efficiencyBlockers', enhancedText)}
+                  />
+                }
               />
             </div>
 
@@ -402,6 +471,13 @@ const FlowDetailPage = () => {
                 value={audit.errorHandlingNotes || ''}
                 onChange={(e) => handleFieldChange('errorHandlingNotes', e.target.value)}
                 rows={4}
+                enhanceButton={
+                  <EnhanceButton
+                    currentText={audit.errorHandlingNotes || ''}
+                    context={{ type: 'general' }}
+                    onEnhanced={(enhancedText) => handleFieldChange('errorHandlingNotes', enhancedText)}
+                  />
+                }
               />
             </div>
 
@@ -412,6 +488,13 @@ const FlowDetailPage = () => {
                 value={audit.recoveryPathsNotes || ''}
                 onChange={(e) => handleFieldChange('recoveryPathsNotes', e.target.value)}
                 rows={4}
+                enhanceButton={
+                  <EnhanceButton
+                    currentText={audit.recoveryPathsNotes || ''}
+                    context={{ type: 'general' }}
+                    onEnhanced={(enhancedText) => handleFieldChange('recoveryPathsNotes', enhancedText)}
+                  />
+                }
               />
             </div>
           </div>

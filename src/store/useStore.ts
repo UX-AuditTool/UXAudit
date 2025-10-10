@@ -3,9 +3,11 @@ import { Project, Flow, FlowAudit, HeuristicViolation } from '../types';
 import {
   dbGetAllProjects,
   dbCreateProject,
+  dbUpdateProject,
   dbDeleteProject,
   dbGetFlowsByProject,
   dbCreateFlow,
+  dbUpdateFlow,
   dbGetOrCreateFlowAudit,
   dbUpdateFlowAudit,
 } from '../lib/db';
@@ -24,11 +26,13 @@ interface AppState {
 
   // Actions - Projects
   addProject: (project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Project>;
+  updateProject: (projectId: string, updates: Partial<Omit<Project, 'id' | 'createdAt' | 'updatedAt'>>) => Promise<void>;
   deleteProject: (projectId: string) => Promise<void>;
   setCurrentProject: (projectId: string) => void;
 
   // Actions - Flows
   addFlow: (flow: Omit<Flow, 'id' | 'createdAt' | 'updatedAt' | 'order'>) => Promise<Flow>;
+  updateFlow: (flowId: string, updates: Partial<Omit<Flow, 'id' | 'projectId' | 'createdAt' | 'updatedAt'>>) => Promise<void>;
   getFlowsByProject: (projectId: string) => Flow[];
 
   // Actions - Flow Audits
@@ -86,6 +90,20 @@ const useStore = create<AppState>((set, get) => ({
     }
   },
 
+  updateProject: async (projectId: string, updates) => {
+    try {
+      const updatedProject = await dbUpdateProject(projectId, updates);
+      set((state) => ({
+        projects: state.projects.map((p) =>
+          p.id === projectId ? updatedProject : p
+        ),
+      }));
+    } catch (error) {
+      console.error('Error updating project:', error);
+      throw error;
+    }
+  },
+
   deleteProject: async (projectId: string) => {
     try {
       await dbDeleteProject(projectId);
@@ -114,6 +132,20 @@ const useStore = create<AppState>((set, get) => ({
       return newFlow;
     } catch (error) {
       console.error('Error creating flow:', error);
+      throw error;
+    }
+  },
+
+  updateFlow: async (flowId: string, updates) => {
+    try {
+      const updatedFlow = await dbUpdateFlow(flowId, updates);
+      set((state) => ({
+        flows: state.flows.map((f) =>
+          f.id === flowId ? updatedFlow : f
+        ),
+      }));
+    } catch (error) {
+      console.error('Error updating flow:', error);
       throw error;
     }
   },

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Info } from 'lucide-react';
 import Textarea from '../ui/Textarea';
+import EnhanceButton from '../ui/EnhanceButton';
 import SeveritySelector from './SeveritySelector';
 import ScreenshotUpload from './ScreenshotUpload';
 import { Heuristic, Severity, HeuristicViolation } from '../../types';
@@ -133,6 +134,17 @@ const HeuristicCarousel = ({
             value={notes}
             onChange={(e) => onNotesChange(currentHeuristic.name, e.target.value)}
             rows={4}
+            enhanceButton={
+              <EnhanceButton
+                currentText={notes}
+                context={{
+                  type: 'heuristic',
+                  heuristic: currentHeuristic.name,
+                  severity: severity,
+                }}
+                onEnhanced={(enhancedText) => onNotesChange(currentHeuristic.name, enhancedText)}
+              />
+            }
           />
 
           <ScreenshotUpload

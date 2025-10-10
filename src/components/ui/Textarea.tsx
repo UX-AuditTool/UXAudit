@@ -1,9 +1,10 @@
-import { TextareaHTMLAttributes, forwardRef } from 'react';
+import { TextareaHTMLAttributes, forwardRef, ReactNode } from 'react';
 
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
   helperText?: string;
+  enhanceButton?: ReactNode;
 }
 
 const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
@@ -12,6 +13,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       label,
       error,
       helperText,
+      enhanceButton,
       className = '',
       id,
       required,
@@ -34,28 +36,35 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           </label>
         )}
 
-        <textarea
-          ref={ref}
-          id={textareaId}
-          required={required}
-          className={`
-            w-full min-h-[100px] px-3 py-3 rounded-base border-[1.5px] font-body text-body-sm text-espresso-500
-            placeholder:text-neutral-400 resize-y
-            focus:outline-none focus:border-2 focus:border-teal-500 focus:shadow-[0_0_0_3px_rgba(81,108,97,0.12)]
-            disabled:bg-neutral-100 disabled:text-neutral-400 disabled:cursor-not-allowed
-            transition-all duration-fast
-            ${hasError
-              ? 'border-error focus:border-error focus:shadow-[0_0_0_3px_rgba(139,58,58,0.12)]'
-              : 'border-neutral-200'
+        <div className="relative">
+          <textarea
+            ref={ref}
+            id={textareaId}
+            required={required}
+            className={`
+              w-full min-h-[100px] px-3 py-3 pb-10 rounded-base border-[1.5px] font-body text-body-sm text-espresso-500
+              placeholder:text-neutral-400 resize-y
+              focus:outline-none focus:border-2 focus:border-teal-500 focus:shadow-[0_0_0_3px_rgba(81,108,97,0.12)]
+              disabled:bg-neutral-100 disabled:text-neutral-400 disabled:cursor-not-allowed
+              transition-all duration-fast
+              ${hasError
+                ? 'border-error focus:border-error focus:shadow-[0_0_0_3px_rgba(139,58,58,0.12)]'
+                : 'border-neutral-200'
+              }
+              ${className}
+            `}
+            aria-invalid={hasError}
+            aria-describedby={
+              error ? `${textareaId}-error` : helperText ? `${textareaId}-helper` : undefined
             }
-            ${className}
-          `}
-          aria-invalid={hasError}
-          aria-describedby={
-            error ? `${textareaId}-error` : helperText ? `${textareaId}-helper` : undefined
-          }
-          {...props}
-        />
+            {...props}
+          />
+          {enhanceButton && (
+            <div className="absolute bottom-2 right-2">
+              {enhanceButton}
+            </div>
+          )}
+        </div>
 
         {error && (
           <p id={`${textareaId}-error`} className="mt-1 text-body-xs text-error">

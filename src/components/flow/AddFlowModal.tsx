@@ -19,7 +19,6 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
 
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
     urls: [''],
   });
 
@@ -27,6 +26,7 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Flow form submitted!', formData);
 
     // Validation
     const newErrors: Record<string, string> = {};
@@ -35,11 +35,13 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
     }
 
     if (Object.keys(newErrors).length > 0) {
+      console.log('Validation errors:', newErrors);
       setErrors(newErrors);
       return;
     }
 
     try {
+      console.log('Creating flow...');
       // Filter out empty URLs
       const urls = formData.urls.filter((url) => url.trim() !== '');
 
@@ -47,14 +49,14 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
       const flow = await addFlow({
         projectId,
         name: formData.name,
-        description: formData.description,
         urls,
       });
+
+      console.log('Flow created successfully:', flow);
 
       // Reset form
       setFormData({
         name: '',
-        description: '',
         urls: [''],
       });
       setErrors({});
@@ -64,7 +66,8 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
       navigate(`/projects/${projectId}/flows/${flow.id}`);
     } catch (error) {
       console.error('Failed to create flow:', error);
-      setErrors({ submit: 'Failed to create flow. Please try again.' });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create flow. Please try again.';
+      setErrors({ submit: errorMessage });
     }
   };
 
@@ -101,11 +104,17 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
           <Button variant="secondary" onClick={() => onOpenChange(false)} type="button">
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Create Flow</Button>
+          <Button type="submit" form="add-flow-form">Create Flow</Button>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form id="add-flow-form" onSubmit={handleSubmit} className="space-y-5">
+        {errors.submit && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <strong>Error:</strong> {errors.submit}
+          </div>
+        )}
+
         <Input
           label="Flow Name"
           placeholder="e.g., Homepage to Product"
@@ -114,14 +123,6 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
           error={errors.name}
           required
           autoFocus
-        />
-
-        <Textarea
-          label="Description (optional)"
-          placeholder="Describe the purpose of this flow..."
-          value={formData.description}
-          onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-          rows={3}
         />
 
         <div>

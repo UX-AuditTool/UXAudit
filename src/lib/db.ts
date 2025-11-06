@@ -212,7 +212,6 @@ export const dbCreateFlow = async (
     .insert({
       project_id: flow.projectId,
       name: flow.name,
-      description: flow.description,
       urls: flow.urls,
       order: maxOrder + 1,
     })

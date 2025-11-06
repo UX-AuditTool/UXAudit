@@ -29,6 +29,7 @@ const ProjectSetupModal = ({ open, onOpenChange }: ProjectSetupModalProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted!', formData);
 
     // Validation
     const newErrors: Record<string, string> = {};
@@ -40,11 +41,13 @@ const ProjectSetupModal = ({ open, onOpenChange }: ProjectSetupModalProps) => {
     }
 
     if (Object.keys(newErrors).length > 0) {
+      console.log('Validation errors:', newErrors);
       setErrors(newErrors);
       return;
     }
 
     try {
+      console.log('Creating project...');
       // Create project
       const project = await addProject({
         name: formData.name,
@@ -53,6 +56,8 @@ const ProjectSetupModal = ({ open, onOpenChange }: ProjectSetupModalProps) => {
         devices: formData.devices.length > 0 ? formData.devices : undefined,
         hipaaRequired: formData.hipaaRequired,
       });
+
+      console.log('Project created successfully:', project);
 
       // Reset form
       setFormData({
@@ -69,7 +74,8 @@ const ProjectSetupModal = ({ open, onOpenChange }: ProjectSetupModalProps) => {
       navigate(`/projects/${project.id}`);
     } catch (error) {
       console.error('Failed to create project:', error);
-      setErrors({ submit: 'Failed to create project. Please try again.' });
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create project. Please try again.';
+      setErrors({ submit: errorMessage });
     }
   };
 
@@ -97,13 +103,19 @@ const ProjectSetupModal = ({ open, onOpenChange }: ProjectSetupModalProps) => {
           >
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>
+          <Button type="submit" form="project-setup-form">
             Create Project
           </Button>
         </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form id="project-setup-form" onSubmit={handleSubmit} className="space-y-5">
+        {errors.submit && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <strong>Error:</strong> {errors.submit}
+          </div>
+        )}
+
         <Input
           label="Project Name"
           placeholder="e.g., E-commerce Checkout Audit"

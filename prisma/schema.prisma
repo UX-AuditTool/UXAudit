@@ -1,0 +1,73 @@
+// Prisma schema for UX Audit Tool - Azure PostgreSQL
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Projects table
+model Project {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name         String
+  clientName   String   @map("client_name")
+  auditGoal    String?  @map("audit_goal")
+  devices      String[] @default([])
+  hipaaRequired Boolean @default(false) @map("hipaa_required")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  flows Flow[]
+
+  @@map("projects")
+}
+
+// Flows table
+model Flow {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId   String   @map("project_id") @db.Uuid
+  name        String
+  urls        String[] @default([])
+  order       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  flowAudit   FlowAudit?
+
+  @@index([projectId])
+  @@map("flows")
+}
+
+// Flow audits table
+model FlowAudit {
+  id                              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  flowId                          String   @unique @map("flow_id") @db.Uuid
+  heuristicViolations             Json     @default("[]") @map("heuristic_violations") @db.JsonB
+  platformNotes                   String?  @map("platform_notes")
+  wcagCompliant                   Boolean  @default(false) @map("wcag_compliant")
+  wcagNotes                       String?  @map("wcag_notes")
+  hipaaCompliant                  Boolean  @default(false) @map("hipaa_compliant")
+  brandGuidelinesCompliant        Boolean  @default(false) @map("brand_guidelines_compliant")
+  brandGuidelineNonComplianceAreas String? @map("brand_guideline_non_compliance_areas")
+  typographyNotes                 String?  @map("typography_notes")
+  colorPaletteNotes               String?  @map("color_palette_notes")
+  iconographyNotes                String?  @map("iconography_notes")
+  componentUsageNotes             String?  @map("component_usage_notes")
+  feedbackAffordancesNotes        String?  @map("feedback_affordances_notes")
+  responsivenessNotes             String?  @map("responsiveness_notes")
+  efficiencyBlockers              String?  @map("efficiency_blockers")
+  errorHandlingNotes              String?  @map("error_handling_notes")
+  recoveryPathsNotes              String?  @map("recovery_paths_notes")
+  createdAt                       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  flow Flow @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@index([flowId])
+  @@map("flow_audits")
+}

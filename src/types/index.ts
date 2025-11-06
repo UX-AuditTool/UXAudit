@@ -2,46 +2,21 @@ export interface Project {
   id: string;
   name: string;
   clientName: string;
-  auditGoal?: string;
-  devices?: Device[];
-  hipaaRequired?: boolean;
-
-  // Platform & Technical (project-level)
-  platformNotes?: string;
-
-  // Accessibility & Compliance (project-level)
-  wcagCompliant?: boolean;
-  wcagNotes?: string;
-  hipaaCompliant?: boolean;
-
-  // Brand Guidelines (project-level)
-  brandGuidelinesCompliant?: boolean;
-  brandGuidelineNonComplianceAreas?: string;
-  typographyNotes?: string;
-  colorPaletteNotes?: string;
-  iconographyNotes?: string;
-  componentUsageNotes?: string;
-  feedbackAffordancesNotes?: string;
-  responsivenessNotes?: string;
-
-  // Usability Risks & Opportunities (project-level)
-  efficiencyBlockers?: string;
-  errorHandlingNotes?: string;
-  recoveryPathsNotes?: string;
-
-  createdAt: Date;
-  updatedAt: Date;
+  auditGoal: string | null;
+  devices: string[];
+  hipaaRequired: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Flow {
   id: string;
   projectId: string;
   name: string;
-  description?: string;
   urls: string[];
   order: number;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type Severity = 'Critical' | 'High' | 'Medium' | 'Low' | 'None';
@@ -68,39 +43,24 @@ export interface HeuristicViolation {
 export interface FlowAudit {
   id: string;
   flowId: string;
-
-  // Heuristic Violations
   heuristicViolations: HeuristicViolation[];
-
-  // Platform & Technical
-  platformNotes?: string;
-
-  // Accessibility & Compliance
-  wcagCompliant?: boolean;
-  wcagNotes?: string;
-  hipaaCompliant?: boolean;
-  hipaaRequired?: boolean;
-
-  // Design System Assessment
-  brandGuidelinesCompliant?: boolean;
-  brandGuidelineNonComplianceAreas?: string;
-  typographyNotes?: string;
-  colorPaletteNotes?: string;
-  iconographyNotes?: string;
-  componentUsageNotes?: string;
-  feedbackAffordancesNotes?: string;
-  responsivenessNotes?: string;
-
-  // Usability Risks & Opportunities
-  efficiencyBlockers?: string;
-  errorHandlingNotes?: string;
-  recoveryPathsNotes?: string;
-
-  // Auto-calculated score
-  overallScore?: number;
-
-  createdAt: Date;
-  updatedAt: Date;
+  platformNotes: string | null;
+  wcagCompliant: boolean;
+  wcagNotes: string | null;
+  hipaaCompliant: boolean;
+  brandGuidelinesCompliant: boolean;
+  brandGuidelineNonComplianceAreas: string | null;
+  typographyNotes: string | null;
+  colorPaletteNotes: string | null;
+  iconographyNotes: string | null;
+  componentUsageNotes: string | null;
+  feedbackAffordancesNotes: string | null;
+  responsivenessNotes: string | null;
+  efficiencyBlockers: string | null;
+  errorHandlingNotes: string | null;
+  recoveryPathsNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type Platform = 'Web' | 'iOS' | 'Android';

@@ -3,10 +3,15 @@
  * Connects to Azure PostgreSQL using Prisma
  */
 
-import 'dotenv/config';
+// Only load dotenv in development - Azure provides env vars in production
+if (process.env.NODE_ENV !== 'production') {
+  await import('dotenv/config');
+}
+
 import express from 'express';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -299,6 +304,142 @@ app.patch('/api/flows/:flowId/audit', async (req, res) => {
   } catch (error) {
     console.error('Error updating flow audit:', error);
     res.status(500).json({ error: 'Failed to update flow audit' });
+  }
+});
+
+// ============================================================================
+// AI PROXY API
+// ============================================================================
+
+// Initialize Gemini AI
+let genAI: GoogleGenerativeAI | null = null;
+
+const geminiApiKey = process.env.GEMINI_API_KEY;
+if (geminiApiKey) {
+  genAI = new GoogleGenerativeAI(geminiApiKey);
+  console.log('✅ Gemini AI initialized');
+} else {
+  console.warn('⚠️  GEMINI_API_KEY not set - AI features will be disabled');
+}
+
+// Proxy endpoint for text enhancement
+app.post('/api/ai/enhance', async (req, res) => {
+  try {
+    if (!genAI) {
+      return res.status(503).json({
+        error: 'AI service not configured. Please contact administrator.'
+      });
+    }
+
+    const { text, context } = req.body;
+
+    if (!text || typeof text !== 'string') {
+      return res.status(400).json({ error: 'Text is required' });
+    }
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+
+    // Build context-aware prompt
+    let prompt = '';
+
+    if (context?.type === 'heuristic' && context.heuristic) {
+      prompt = `You are a UX audit assistant helping to improve documentation. The designer wrote the following note about a usability issue related to "${context.heuristic}":
+
+"${text}"
+
+Rewrite this note to be more clear, professional, and concise. Only use the information provided - do not add new observations or make assumptions. If the note is too brief, make it slightly more descriptive while staying true to what was written.
+
+Enhanced note:`;
+    } else if (context?.type === 'wcag') {
+      prompt = `You are a UX audit assistant helping to improve documentation. The designer wrote the following note about accessibility:
+
+"${text}"
+
+Rewrite this note to be more clear, professional, and concise. Only use the information provided - do not add new observations or make assumptions.
+
+Enhanced note:`;
+    } else if (context?.type === 'brand') {
+      prompt = `You are a UX audit assistant helping to improve documentation. The designer wrote the following note about brand guidelines:
+
+"${text}"
+
+Rewrite this note to be more clear, professional, and concise. Only use the information provided - do not add new observations or make assumptions.
+
+Enhanced note:`;
+    } else {
+      // General enhancement
+      prompt = `You are a UX audit assistant helping to improve documentation. The designer wrote:
+
+"${text}"
+
+Rewrite this to be more clear, professional, and concise. Only use the information provided - do not add new observations or make assumptions.
+
+Enhanced note:`;
+    }
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const enhancedText = response.text().trim();
+
+    res.json({ enhancedText });
+  } catch (error) {
+    console.error('Gemini API error:', error);
+    res.status(500).json({ error: 'Failed to enhance text. Please try again.' });
+  }
+});
+
+// Proxy endpoint for project summary generation
+app.post('/api/ai/summarize', async (req, res) => {
+  try {
+    if (!genAI) {
+      return res.status(503).json({
+        error: 'AI service not configured. Please contact administrator.'
+      });
+    }
+
+    const { projectName, flowCount, averageScore, flowSummaries } = req.body;
+
+    if (!projectName || !flowSummaries || !Array.isArray(flowSummaries)) {
+      return res.status(400).json({ error: 'Invalid request data' });
+    }
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+
+    // Build summary of all flows and their notes
+    const flowSummariesText = flowSummaries
+      .map((flow: any) => {
+        const notesText = flow.notes.filter((n: string) => n.trim()).join('\n- ');
+        return `**${flow.flowName}** (Score: ${flow.score}/5)\n${notesText ? `- ${notesText}` : '(No detailed notes)'}`;
+      })
+      .join('\n\n');
+
+    const prompt = `You are a UX audit assistant creating an executive summary for a project audit.
+
+Project: ${projectName}
+Total Flows Audited: ${flowCount}
+Average Score: ${averageScore.toFixed(1)}/5
+
+Flow-by-Flow Findings:
+${flowSummariesText}
+
+Based on the audit findings above, create a concise executive summary (3-4 paragraphs) that:
+1. Opens with the overall project health and average score
+2. Highlights the most critical issues found across all flows
+3. Identifies common patterns or themes in the usability problems
+4. Provides 2-3 high-priority recommendations for improvement
+
+Keep it professional, actionable, and focused on business impact. Use bullet points sparingly for clarity.
+
+Executive Summary:`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const summary = response.text().trim();
+
+    res.json({ summary });
+  } catch (error) {
+    console.error('Gemini API error:', error);
+    res.status(500).json({ error: 'Failed to generate summary. Please try again.' });
   }
 });
 

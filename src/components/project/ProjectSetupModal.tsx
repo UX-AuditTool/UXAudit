@@ -52,9 +52,26 @@ const ProjectSetupModal = ({ open, onOpenChange }: ProjectSetupModalProps) => {
       const project = await addProject({
         name: formData.name,
         clientName: formData.clientName,
-        auditGoal: formData.auditGoal || undefined,
-        devices: formData.devices.length > 0 ? formData.devices : undefined,
+        auditGoal: formData.auditGoal || null,
+        devices: formData.devices.length > 0 ? formData.devices : [],
         hipaaRequired: formData.hipaaRequired,
+        // Audit fields (initialized as empty/default)
+        platformNotes: null,
+        wcagCompliant: false,
+        wcagNotes: null,
+        hipaaCompliant: false,
+        brandGuidelinesCompliant: false,
+        brandGuidelineNonComplianceAreas: null,
+        // Brand guideline fields (initialized as empty)
+        typographyNotes: null,
+        colorPaletteNotes: null,
+        iconographyNotes: null,
+        componentUsageNotes: null,
+        feedbackAffordancesNotes: null,
+        responsivenessNotes: null,
+        efficiencyBlockers: null,
+        errorHandlingNotes: null,
+        recoveryPathsNotes: null,
       });
 
       console.log('Project created successfully:', project);

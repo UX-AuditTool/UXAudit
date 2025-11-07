@@ -34,3 +34,10 @@ build
 .vercel
 
 /src/generated/prisma
+
+# Deployment artifacts
+*.zip
+LogFiles/
+LogFiles-*/
+backend-deploy/
+deployments/

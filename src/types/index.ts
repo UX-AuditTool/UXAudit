@@ -7,12 +7,30 @@ export interface Project {
   hipaaRequired: boolean;
   createdAt: string;
   updatedAt: string;
+  // Audit fields (project-level)
+  platformNotes: string | null;
+  wcagCompliant: boolean;
+  wcagNotes: string | null;
+  hipaaCompliant: boolean;
+  brandGuidelinesCompliant: boolean;
+  brandGuidelineNonComplianceAreas: string | null;
+  // Brand guideline fields (project-level)
+  typographyNotes: string | null;
+  colorPaletteNotes: string | null;
+  iconographyNotes: string | null;
+  componentUsageNotes: string | null;
+  feedbackAffordancesNotes: string | null;
+  responsivenessNotes: string | null;
+  efficiencyBlockers: string | null;
+  errorHandlingNotes: string | null;
+  recoveryPathsNotes: string | null;
 }
 
 export interface Flow {
   id: string;
   projectId: string;
   name: string;
+  description: string | null;
   urls: string[];
   order: number;
   createdAt: string;

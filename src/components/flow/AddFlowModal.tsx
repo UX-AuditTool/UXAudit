@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from '../ui/Modal';
 import Input from '../ui/Input';
-import Textarea from '../ui/Textarea';
 import Button from '../ui/Button';
 import useStore from '../../store/useStore';
 import { Plus, X } from 'lucide-react';
@@ -49,6 +48,7 @@ const AddFlowModal = ({ open, onOpenChange, projectId }: AddFlowModalProps) => {
       const flow = await addFlow({
         projectId,
         name: formData.name,
+        description: null,
         urls,
       });
 

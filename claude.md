@@ -16,24 +16,23 @@
 - pnpm (package manager)
 
 ### Backend
-- Node.js with TypeScript
-- Express.js or Fastify
-- PostgreSQL (database)
-- Prisma (ORM)
-- Auth0 or JWT with SSO support
-- Bull/BullMQ (job queue)
+- Node.js 20 with TypeScript (compiles to ES modules)
+- Express.js (not Fastify)
+- PostgreSQL on Azure (not local)
+- Prisma ORM
 
 
 ## Development Principles
 
 ### Code Quality Standards
 - **TypeScript strict mode** enabled
-- **Keep changes under 100 lines** where possible
+- **Keep changes as small as possible
 - **Reuse existing components** before creating new ones - always ask first
 - **Only modify what's needed** for the current task
 - **Clean, descriptive naming** for variables and functions
 - **Single responsibility principle** for functions and components
 - **DRY principle** - create reusable utilities
+- **Think it through** No quick fixes!! Do it right. Measure twice, cut once! La prisa mata
 
 ### Git Standards
 - Use **descriptive conventional commits**:
@@ -41,8 +40,9 @@
   - `fix(area): description`
   - `refactor(area): description`
   - `test(area): description`
-- Clear commit messages explaining what and why
+- Clear commit messages explaining what and why but without any Claude or Anthropic attribution
 - Use pnpm for all package management
+
 
 
 ## Design System
@@ -143,6 +143,9 @@ Store in JSON/TypeScript for Tailwind consumption:
 - API response: < 200ms (95th percentile)
 
 ### Security
+SECURITY IS OF UTMOST IMPORTANCE!!
+Always vet installations of any kind
+Think security-first before you do something
 - TLS 1.3 encryption
 - Encrypted data at rest
 - SQL injection prevention

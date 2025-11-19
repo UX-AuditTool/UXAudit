@@ -9,6 +9,6 @@ echo "🚀 Starting UX Audit Backend..."
 echo "📦 Generating Prisma client..."
 npx prisma generate
 
-# Start the Express server
+# Start the Express server (compiled JavaScript)
 echo "🌐 Starting Express server on port ${PORT:-8080}..."
-node server/index.ts
+node dist/index.js

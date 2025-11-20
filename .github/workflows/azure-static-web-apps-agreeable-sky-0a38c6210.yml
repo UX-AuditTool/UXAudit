@@ -33,7 +33,7 @@ jobs:
           output_location: "dist" # Built app content directory - Vite outputs to dist
           ###### End of Repository/Build Configurations ######
         env:
-          VITE_API_URL: https://uxaudit-backend.azurewebsites.net
+          VITE_API_URL: https://uxaudit-api-abctecgec9ebc3ax.centralus-01.azurewebsites.net
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

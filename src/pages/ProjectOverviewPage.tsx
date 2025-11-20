@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Plus, Workflow, Sparkles } from 'lucide-react';
 import useStore from '../store/useStore';
@@ -26,6 +26,10 @@ const ProjectOverviewPage = () => {
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
 
+  // Local state for text fields to enable responsive typing
+  const [localFields, setLocalFields] = useState<Record<string, string>>({});
+  const debounceTimers = useRef<Record<string, NodeJS.Timeout>>({});
+
   // Load flows when project loads
   useEffect(() => {
     if (projectId) {
@@ -33,10 +37,51 @@ const ProjectOverviewPage = () => {
     }
   }, [projectId, loadFlows]);
 
-  const handleFieldChange = (field: string, value: string | boolean) => {
+  // Sync local fields when project changes
+  useEffect(() => {
+    if (project) {
+      setLocalFields({});
+    }
+  }, [project?.id]);
+
+  // Debounced field change handler for text inputs
+  const handleFieldChange = useCallback((field: string, value: string | boolean) => {
     if (!project) return;
-    updateProject(project.id, { [field]: value });
+
+    // For boolean values, update immediately
+    if (typeof value === 'boolean') {
+      updateProject(project.id, { [field]: value });
+      return;
+    }
+
+    // For text values, update local state immediately for responsive typing
+    setLocalFields(prev => ({ ...prev, [field]: value }));
+
+    // Clear existing timer for this field
+    if (debounceTimers.current[field]) {
+      clearTimeout(debounceTimers.current[field]);
+    }
+
+    // Debounce the API call (500ms after user stops typing)
+    debounceTimers.current[field] = setTimeout(() => {
+      updateProject(project.id, { [field]: value });
+    }, 500);
+  }, [project, updateProject]);
+
+  // Helper to get field value (local state takes precedence for responsive typing)
+  const getFieldValue = (field: string): string => {
+    if (field in localFields) {
+      return localFields[field];
+    }
+    return (project?.[field as keyof typeof project] as string) || '';
   };
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(debounceTimers.current).forEach(timer => clearTimeout(timer));
+    };
+  }, []);
 
   const handleGenerateSummary = async () => {
     if (!project) return;
@@ -251,7 +296,7 @@ const ProjectOverviewPage = () => {
                 <Textarea
                   label="Platform Notes"
                   placeholder="Technical observations, framework patterns, performance considerations..."
-                  value={project.platformNotes || ''}
+                  value={getFieldValue('platformNotes')}
                   onChange={(e) => handleFieldChange('platformNotes', e.target.value)}
                   rows={5}
                   enhanceButton={
@@ -298,7 +343,7 @@ const ProjectOverviewPage = () => {
                   <Textarea
                     label="WCAG Notes"
                     placeholder="Accessibility issues found, contrast ratios, keyboard navigation, screen reader compatibility..."
-                    value={project.wcagNotes || ''}
+                    value={getFieldValue('wcagNotes')}
                     onChange={(e) => handleFieldChange('wcagNotes', e.target.value)}
                     rows={4}
                     enhanceButton={
@@ -371,7 +416,7 @@ const ProjectOverviewPage = () => {
                     <Textarea
                       label="Areas of Non-Compliance"
                       placeholder="Specify which areas do not comply with brand guidelines (e.g., Typography inconsistent, Color palette not followed, Custom components used)..."
-                      value={project.brandGuidelineNonComplianceAreas || ''}
+                      value={getFieldValue('brandGuidelineNonComplianceAreas')}
                       onChange={(e) => handleFieldChange('brandGuidelineNonComplianceAreas', e.target.value)}
                       rows={3}
                       enhanceButton={
@@ -389,7 +434,7 @@ const ProjectOverviewPage = () => {
                   <Textarea
                     label="Typography Consistency"
                     placeholder="Font usage, hierarchy, readability..."
-                    value={project.typographyNotes || ''}
+                    value={getFieldValue('typographyNotes')}
                     onChange={(e) => handleFieldChange('typographyNotes', e.target.value)}
                     rows={3}
                     enhanceButton={
@@ -404,7 +449,7 @@ const ProjectOverviewPage = () => {
                   <Textarea
                     label="Color Palette Usage"
                     placeholder="Brand colors, contrast, accessibility..."
-                    value={project.colorPaletteNotes || ''}
+                    value={getFieldValue('colorPaletteNotes')}
                     onChange={(e) => handleFieldChange('colorPaletteNotes', e.target.value)}
                     rows={3}
                     enhanceButton={
@@ -419,7 +464,7 @@ const ProjectOverviewPage = () => {
                   <Textarea
                     label="Iconography Consistency"
                     placeholder="Icon style, sizing, clarity..."
-                    value={project.iconographyNotes || ''}
+                    value={getFieldValue('iconographyNotes')}
                     onChange={(e) => handleFieldChange('iconographyNotes', e.target.value)}
                     rows={3}
                     enhanceButton={
@@ -434,7 +479,7 @@ const ProjectOverviewPage = () => {
                   <Textarea
                     label="Component Usage"
                     placeholder="Design system adherence, custom components, inconsistencies..."
-                    value={project.componentUsageNotes || ''}
+                    value={getFieldValue('componentUsageNotes')}
                     onChange={(e) => handleFieldChange('componentUsageNotes', e.target.value)}
                     rows={3}
                     enhanceButton={
@@ -449,7 +494,7 @@ const ProjectOverviewPage = () => {
                   <Textarea
                     label="Feedback & System Status"
                     placeholder="Loading states, error prevention/recovery, user feedback mechanisms..."
-                    value={project.feedbackAffordancesNotes || ''}
+                    value={getFieldValue('feedbackAffordancesNotes')}
                     onChange={(e) => handleFieldChange('feedbackAffordancesNotes', e.target.value)}
                     rows={3}
                     enhanceButton={
@@ -464,7 +509,7 @@ const ProjectOverviewPage = () => {
                   <Textarea
                     label="Responsiveness & Micro-interactions"
                     placeholder="Breakpoint behavior, animation quality, touch interactions..."
-                    value={project.responsivenessNotes || ''}
+                    value={getFieldValue('responsivenessNotes')}
                     onChange={(e) => handleFieldChange('responsivenessNotes', e.target.value)}
                     rows={3}
                     enhanceButton={
@@ -492,7 +537,7 @@ const ProjectOverviewPage = () => {
                   <Textarea
                     label="Efficiency Blockers"
                     placeholder="Redundant data entry, excessive clicks, unclear CTAs, unnecessary steps..."
-                    value={project.efficiencyBlockers || ''}
+                    value={getFieldValue('efficiencyBlockers')}
                     onChange={(e) => handleFieldChange('efficiencyBlockers', e.target.value)}
                     rows={4}
                     enhanceButton={
@@ -509,7 +554,7 @@ const ProjectOverviewPage = () => {
                   <Textarea
                     label="Error Handling Patterns"
                     placeholder="Validation messages, error prevention, inline feedback..."
-                    value={project.errorHandlingNotes || ''}
+                    value={getFieldValue('errorHandlingNotes')}
                     onChange={(e) => handleFieldChange('errorHandlingNotes', e.target.value)}
                     rows={4}
                     enhanceButton={
@@ -526,7 +571,7 @@ const ProjectOverviewPage = () => {
                   <Textarea
                     label="Recovery Paths"
                     placeholder="How users can recover from errors, undo functionality, escape routes..."
-                    value={project.recoveryPathsNotes || ''}
+                    value={getFieldValue('recoveryPathsNotes')}
                     onChange={(e) => handleFieldChange('recoveryPathsNotes', e.target.value)}
                     rows={4}
                     enhanceButton={

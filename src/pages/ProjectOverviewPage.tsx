@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Plus, Workflow, Sparkles } from 'lucide-react';
+import { Plus, Workflow, Sparkles, Trash2 } from 'lucide-react';
 import useStore from '../store/useStore';
 import Button from '../components/ui/Button';
 import Card, { CardContent } from '../components/ui/Card';
@@ -20,11 +20,23 @@ const ProjectOverviewPage = () => {
   const flowAudits = useStore((state) => state.flowAudits);
   const loadFlows = useStore((state) => state.loadFlows);
   const updateProject = useStore((state) => state.updateProject);
+  const deleteFlow = useStore((state) => state.deleteFlow);
 
   const [showAddFlowModal, setShowAddFlowModal] = useState(false);
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+
+  const handleDeleteFlow = async (flowId: string, flowName: string) => {
+    if (window.confirm(`Are you sure you want to delete "${flowName}"? This action cannot be undone.`)) {
+      try {
+        await deleteFlow(flowId);
+      } catch (error) {
+        console.error('Error deleting flow:', error);
+        alert('Failed to delete flow. Please try again.');
+      }
+    }
+  };
 
   // Local state for text fields to enable responsive typing
   const [localFields, setLocalFields] = useState<Record<string, string>>({});
@@ -637,21 +649,39 @@ const ProjectOverviewPage = () => {
                         <Card
                           key={flow.id}
                           hover
-                          onClick={() => navigate(`/projects/${projectId}/flows/${flow.id}`)}
+                          className="group"
                         >
                           <CardContent className="p-4">
                             <div className="flex items-start justify-between gap-3 mb-2">
-                              <h3 className="font-heading text-base text-espresso-600 flex-1">
+                              <h3
+                                className="font-heading text-base text-espresso-600 flex-1 cursor-pointer hover:text-sage-600"
+                                onClick={() => navigate(`/projects/${projectId}/flows/${flow.id}`)}
+                              >
                                 {flow.name}
                               </h3>
-                              {hasScore && (
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-label-xs font-medium ${scoreColors.bg} ${scoreColors.text} whitespace-nowrap`}>
-                                  {score.toFixed(1)}
-                                </span>
-                              )}
+                              <div className="flex items-center gap-2">
+                                {hasScore && (
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-label-xs font-medium ${scoreColors.bg} ${scoreColors.text} whitespace-nowrap`}>
+                                    {score.toFixed(1)}
+                                  </span>
+                                )}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteFlow(flow.id, flow.name);
+                                  }}
+                                  className="p-1 text-neutral-400 hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
+                                  aria-label={`Delete ${flow.name}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
                             </div>
                             {flow.description && (
-                              <p className="text-body-xs text-neutral-600">
+                              <p
+                                className="text-body-xs text-neutral-600 cursor-pointer"
+                                onClick={() => navigate(`/projects/${projectId}/flows/${flow.id}`)}
+                              >
                                 {flow.description}
                               </p>
                             )}

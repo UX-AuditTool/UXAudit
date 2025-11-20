@@ -8,6 +8,7 @@ import {
   apiGetFlows,
   apiCreateFlow,
   apiUpdateFlow,
+  apiDeleteFlow,
   apiGetFlowAudit,
   apiUpdateFlowAudit,
 } from '../lib/api';
@@ -33,6 +34,7 @@ interface AppState {
   // Actions - Flows
   addFlow: (flow: Omit<Flow, 'id' | 'createdAt' | 'updatedAt' | 'order'>) => Promise<Flow>;
   updateFlow: (flowId: string, updates: Partial<Omit<Flow, 'id' | 'projectId' | 'createdAt' | 'updatedAt'>>) => Promise<void>;
+  deleteFlow: (flowId: string) => Promise<void>;
   getFlowsByProject: (projectId: string) => Flow[];
 
   // Actions - Flow Audits
@@ -70,6 +72,28 @@ const useStore = create<AppState>((set, get) => ({
           ...flows,
         ],
       }));
+
+      // Load flow audits for all flows in this project
+      const auditPromises = flows.map((flow) =>
+        apiGetFlowAudit(flow.id).catch(() => null)
+      );
+      const audits = await Promise.all(auditPromises);
+      const validAudits = audits.filter((audit): audit is NonNullable<typeof audit> => audit !== null);
+
+      if (validAudits.length > 0) {
+        set((state) => {
+          // Get IDs of audits we're updating
+          const newAuditFlowIds = new Set(validAudits.map((a) => a.flowId));
+          return {
+            flowAudits: [
+              // Keep existing audits that aren't being replaced
+              ...state.flowAudits.filter((a) => !newAuditFlowIds.has(a.flowId)),
+              // Add the new audits
+              ...validAudits,
+            ],
+          };
+        });
+      }
     } catch (error) {
       console.error('Error loading flows:', error);
     }
@@ -146,6 +170,19 @@ const useStore = create<AppState>((set, get) => ({
       }));
     } catch (error) {
       console.error('Error updating flow:', error);
+      throw error;
+    }
+  },
+
+  deleteFlow: async (flowId: string) => {
+    try {
+      await apiDeleteFlow(flowId);
+      set((state) => ({
+        flows: state.flows.filter((f) => f.id !== flowId),
+        flowAudits: state.flowAudits.filter((a) => a.flowId !== flowId),
+      }));
+    } catch (error) {
+      console.error('Error deleting flow:', error);
       throw error;
     }
   },

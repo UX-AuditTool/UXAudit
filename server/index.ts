@@ -10,7 +10,8 @@ if (process.env.NODE_ENV !== 'production') {
 
 import express from 'express';
 import cors from 'cors';
-import { PrismaClient } from '@prisma/client';
+import pkg from '@prisma/client';
+const { PrismaClient } = pkg;
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const app = express();
@@ -21,7 +22,7 @@ app.use(cors());
 app.use(express.json());
 
 // Initialize Prisma client
-let prisma: PrismaClient;
+let prisma: InstanceType<typeof PrismaClient>;
 
 async function initializePrisma() {
   try {
@@ -337,7 +338,7 @@ app.post('/api/ai/enhance', async (req, res) => {
       return res.status(400).json({ error: 'Text is required' });
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     // Build context-aware prompt
     let prompt = '';
@@ -379,12 +380,23 @@ Enhanced note:`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const enhancedText = response.text().trim();
+    let enhancedText = response.text().trim();
+
+    // Clean up response - remove common prefixes the model might include
+    enhancedText = enhancedText
+      .replace(/^Enhanced note:\s*/i, '')
+      .replace(/^"(.+)"$/, '$1')  // Remove surrounding quotes
+      .trim();
 
     res.json({ enhancedText });
-  } catch (error) {
-    console.error('Gemini API error:', error);
-    res.status(500).json({ error: 'Failed to enhance text. Please try again.' });
+  } catch (error: any) {
+    console.error('Gemini API error:', error?.message || error);
+    console.error('Error status:', error?.status);
+    console.error('Error details:', JSON.stringify(error?.errorDetails || error, null, 2));
+
+    // Return the actual error message for debugging
+    const errorMessage = error?.message || 'Failed to enhance text. Please try again.';
+    res.status(500).json({ error: errorMessage });
   }
 });
 
@@ -403,7 +415,7 @@ app.post('/api/ai/summarize', async (req, res) => {
       return res.status(400).json({ error: 'Invalid request data' });
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     // Build summary of all flows and their notes
     const flowSummariesText = flowSummaries

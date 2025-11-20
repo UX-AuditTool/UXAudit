@@ -76,7 +76,7 @@ export const apiCreateProject = async (data: CreateProjectInput): Promise<Projec
 
 export const apiUpdateProject = async (id: string, data: UpdateProjectInput): Promise<Project> => {
   return fetchApi<Project>(`/api/projects/${id}`, {
-    method: 'PUT',
+    method: 'PATCH',
     body: JSON.stringify(data),
   });
 };
@@ -118,7 +118,7 @@ export const apiCreateFlow = async (data: CreateFlowInput): Promise<Flow> => {
 
 export const apiUpdateFlow = async (id: string, data: UpdateFlowInput): Promise<Flow> => {
   return fetchApi<Flow>(`/api/flows/${id}`, {
-    method: 'PUT',
+    method: 'PATCH',
     body: JSON.stringify(data),
   });
 };

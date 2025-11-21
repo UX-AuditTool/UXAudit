@@ -160,6 +160,80 @@ app.delete('/api/projects/:id', async (req, res) => {
   }
 });
 
+// Publish project (generate share token)
+app.post('/api/projects/:id/publish', async (req, res) => {
+  try {
+    // Generate a random share token (12 chars alphanumeric)
+    const shareToken = Array.from(crypto.getRandomValues(new Uint8Array(9)))
+      .map(b => b.toString(36).padStart(2, '0'))
+      .join('')
+      .slice(0, 12);
+
+    const project = await prisma.project.update({
+      where: { id: req.params.id },
+      data: {
+        isPublished: true,
+        shareToken,
+        publishedAt: new Date(),
+      },
+    });
+
+    res.json(project);
+  } catch (error) {
+    console.error('Error publishing project:', error);
+    res.status(500).json({ error: 'Failed to publish project' });
+  }
+});
+
+// Unpublish project
+app.post('/api/projects/:id/unpublish', async (req, res) => {
+  try {
+    const project = await prisma.project.update({
+      where: { id: req.params.id },
+      data: {
+        isPublished: false,
+        shareToken: null,
+        publishedAt: null,
+      },
+    });
+
+    res.json(project);
+  } catch (error) {
+    console.error('Error unpublishing project:', error);
+    res.status(500).json({ error: 'Failed to unpublish project' });
+  }
+});
+
+// ============================================================================
+// PUBLIC VIEW API (no auth required)
+// ============================================================================
+
+// Get public project by share token
+app.get('/api/public/:shareToken', async (req, res) => {
+  try {
+    const project = await prisma.project.findUnique({
+      where: { shareToken: req.params.shareToken },
+      include: {
+        flows: {
+          orderBy: { order: 'asc' },
+          include: {
+            flowAudit: true,
+          },
+        },
+      },
+    });
+
+    if (!project || !project.isPublished) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    res.json(project);
+  } catch (error) {
+    console.error('Error fetching public project:', error);
+    res.status(500).json({ error: 'Failed to fetch project' });
+  }
+});
+
 // ============================================================================
 // FLOWS API
 // ============================================================================

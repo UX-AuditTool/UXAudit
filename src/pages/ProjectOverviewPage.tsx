@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Plus, Workflow, Sparkles, Trash2 } from 'lucide-react';
+import { Plus, Workflow, Sparkles, Trash2, Share2, Copy, Check, X } from 'lucide-react';
 import useStore from '../store/useStore';
 import Button from '../components/ui/Button';
 import Card, { CardContent } from '../components/ui/Card';
@@ -11,6 +11,7 @@ import EditableTitle from '../components/ui/EditableTitle';
 import EnhanceButton from '../components/ui/EnhanceButton';
 import { calculateFlowScore, calculateProjectScore, getScoreColor, getScoreLabel } from '../lib/utils/scoreCalculation';
 import { generateProjectSummary, isAIConfigured, ProjectSummaryData } from '../lib/ai';
+import { apiPublishProject, apiUnpublishProject } from '../lib/api';
 
 const ProjectOverviewPage = () => {
   const navigate = useNavigate();
@@ -26,6 +27,48 @@ const ProjectOverviewPage = () => {
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const loadProjects = useStore((state) => state.loadProjects);
+
+  const handlePublish = async () => {
+    if (!project) return;
+    setIsPublishing(true);
+    try {
+      await apiPublishProject(project.id);
+      await loadProjects(); // Reload to get updated project with shareToken
+    } catch (error) {
+      console.error('Error publishing project:', error);
+      alert('Failed to publish project. Please try again.');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const handleUnpublish = async () => {
+    if (!project) return;
+    if (!window.confirm('Are you sure you want to unpublish this project? The share link will no longer work.')) {
+      return;
+    }
+    setIsPublishing(true);
+    try {
+      await apiUnpublishProject(project.id);
+      await loadProjects();
+    } catch (error) {
+      console.error('Error unpublishing project:', error);
+      alert('Failed to unpublish project. Please try again.');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const handleCopyLink = () => {
+    if (!project?.shareToken) return;
+    const url = `${window.location.origin}/view/${project.shareToken}`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleDeleteFlow = async (flowId: string, flowName: string) => {
     if (window.confirm(`Are you sure you want to delete "${flowName}"? This action cannot be undone.`)) {
@@ -205,6 +248,49 @@ const ProjectOverviewPage = () => {
                       {project.auditGoal}
                     </p>
                   )}
+
+                  {/* Publish/Share Section */}
+                  <div className="mt-4 flex items-center gap-3">
+                    {project.isPublished && project.shareToken ? (
+                      <>
+                        <div className="flex items-center gap-2 px-3 py-2 bg-sage-50 rounded-lg border border-sage-200">
+                          <Share2 className="h-4 w-4 text-sage-600" />
+                          <span className="text-body-sm text-sage-700">Published</span>
+                        </div>
+                        <button
+                          onClick={handleCopyLink}
+                          className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg border border-neutral-200 hover:border-neutral-300 transition-colors"
+                        >
+                          {copied ? (
+                            <Check className="h-4 w-4 text-green-600" />
+                          ) : (
+                            <Copy className="h-4 w-4 text-neutral-500" />
+                          )}
+                          <span className="text-body-sm text-neutral-600">
+                            {copied ? 'Copied!' : 'Copy Link'}
+                          </span>
+                        </button>
+                        <button
+                          onClick={handleUnpublish}
+                          disabled={isPublishing}
+                          className="flex items-center gap-1.5 px-3 py-2 text-body-sm text-neutral-500 hover:text-error transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                          Unpublish
+                        </button>
+                      </>
+                    ) : (
+                      <Button
+                        onClick={handlePublish}
+                        disabled={isPublishing || flowCount === 0}
+                        leftIcon={<Share2 className="h-4 w-4" />}
+                        size="sm"
+                        variant="secondary"
+                      >
+                        {isPublishing ? 'Publishing...' : 'Publish for Client'}
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
                 {flowCount > 0 && (

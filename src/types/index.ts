@@ -24,6 +24,15 @@ export interface Project {
   efficiencyBlockers: string | null;
   errorHandlingNotes: string | null;
   recoveryPathsNotes: string | null;
+  // Publishing fields
+  isPublished: boolean;
+  shareToken: string | null;
+  publishedAt: string | null;
+}
+
+// Public project view includes flows with their audits
+export interface PublicProject extends Project {
+  flows: (Flow & { flowAudit: FlowAudit | null })[];
 }
 
 export interface Flow {

@@ -3,7 +3,7 @@
  * Replaces Supabase client with direct backend API calls
  */
 
-import { Project, Flow, FlowAudit } from '../types';
+import { Project, Flow, FlowAudit, PublicProject } from '../types';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -207,4 +207,28 @@ export const apiUpdateFlowAudit = async (flowId: string, data: UpdateFlowAuditIn
 
 export const apiDeleteFlowAudit = async (flowId: string): Promise<void> => {
   await fetchApi<void>(`/api/flows/${flowId}/audit`, { method: 'DELETE' });
+};
+
+// ============================================================================
+// Publishing
+// ============================================================================
+
+export const apiPublishProject = async (projectId: string): Promise<Project> => {
+  return fetchApi<Project>(`/api/projects/${projectId}/publish`, {
+    method: 'POST',
+  });
+};
+
+export const apiUnpublishProject = async (projectId: string): Promise<Project> => {
+  return fetchApi<Project>(`/api/projects/${projectId}/unpublish`, {
+    method: 'POST',
+  });
+};
+
+// ============================================================================
+// Public View (no auth)
+// ============================================================================
+
+export const apiGetPublicProject = async (shareToken: string): Promise<PublicProject> => {
+  return fetchApi<PublicProject>(`/api/public/${shareToken}`);
 };

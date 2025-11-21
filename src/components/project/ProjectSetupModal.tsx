@@ -72,6 +72,10 @@ const ProjectSetupModal = ({ open, onOpenChange }: ProjectSetupModalProps) => {
         efficiencyBlockers: null,
         errorHandlingNotes: null,
         recoveryPathsNotes: null,
+        // Publishing fields (initialized as unpublished)
+        isPublished: false,
+        shareToken: null,
+        publishedAt: null,
       });
 
       console.log('Project created successfully:', project);

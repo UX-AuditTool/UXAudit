@@ -38,6 +38,10 @@ model Project {
   efficiencyBlockers              String?  @map("efficiency_blockers")
   errorHandlingNotes              String?  @map("error_handling_notes")
   recoveryPathsNotes              String?  @map("recovery_paths_notes")
+  // Publishing fields
+  isPublished                     Boolean  @default(false) @map("is_published")
+  shareToken                      String?  @unique @map("share_token")
+  publishedAt                     DateTime? @map("published_at") @db.Timestamptz
 
   flows Flow[]
 
